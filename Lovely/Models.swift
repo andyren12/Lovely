@@ -87,14 +87,16 @@ struct BucketListItem: Codable, Identifiable {
     var title: String
     var description: String
     var isCompleted: Bool
+    var photoURLs: [String]
     var createdAt: Date
     var completedAt: Date?
 
-    init(title: String, description: String, isCompleted: Bool = false, createdAt: Date = Date(), completedAt: Date? = nil) {
+    init(title: String, description: String, isCompleted: Bool = false, photoURLs: [String] = [], createdAt: Date = Date(), completedAt: Date? = nil) {
         self.id = UUID().uuidString
         self.title = title
         self.description = description
         self.isCompleted = isCompleted
+        self.photoURLs = photoURLs
         self.createdAt = createdAt
         self.completedAt = completedAt
     }
@@ -105,6 +107,7 @@ struct BucketListItem: Codable, Identifiable {
         self.title = try container.decode(String.self, forKey: .title)
         self.description = try container.decode(String.self, forKey: .description)
         self.isCompleted = try container.decode(Bool.self, forKey: .isCompleted)
+        self.photoURLs = try container.decodeIfPresent([String].self, forKey: .photoURLs) ?? []
         self.createdAt = try container.decode(Date.self, forKey: .createdAt)
         self.completedAt = try container.decodeIfPresent(Date.self, forKey: .completedAt)
     }

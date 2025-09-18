@@ -122,4 +122,20 @@ extension ImageCache {
         let key = Self.cacheKey(eventId: eventId, photoKey: photoKey)
         return getImage(forKey: key)
     }
+
+    // MARK: - Bucket List Item Cache Methods
+
+    static func cacheKey(bucketListItemId: String, photoKey: String) -> String {
+        return "bucket_\(bucketListItemId)_\(photoKey.hashValue)"
+    }
+
+    func cacheBucketListPhoto(_ image: UIImage, bucketListItemId: String, photoKey: String) {
+        let key = Self.cacheKey(bucketListItemId: bucketListItemId, photoKey: photoKey)
+        setImage(image, forKey: key)
+    }
+
+    func getCachedBucketListPhoto(bucketListItemId: String, photoKey: String) -> UIImage? {
+        let key = Self.cacheKey(bucketListItemId: bucketListItemId, photoKey: photoKey)
+        return getImage(forKey: key)
+    }
 }

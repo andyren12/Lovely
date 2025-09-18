@@ -204,4 +204,81 @@ class CalendarManager: ObservableObject {
 
         return []
     }
+
+    // MARK: - Bucket List Integration
+
+    func createEventFromBucketListItem(_ bucketListItem: BucketListItem, coupleId: String) async throws {
+        guard let completedAt = bucketListItem.completedAt else {
+            throw NSError(domain: "CalendarManager", code: 0, userInfo: [NSLocalizedDescriptionKey: "Bucket list item must be completed"])
+        }
+
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            let event = CalendarEvent(
+                title: bucketListItem.title,
+                description: bucketListItem.description,
+                date: completedAt,
+                isAllDay: true,
+                coupleId: coupleId,
+                bucketListItemId: bucketListItem.id
+            )
+
+            var newEvent = event
+            newEvent.photoURLs = bucketListItem.photoURLs
+
+            let documentRef = try db.collection("events").addDocument(from: newEvent)
+            newEvent.id = documentRef.documentID
+
+            events.append(newEvent)
+            events.sort { $0.date < $1.date }
+
+            print("Successfully created calendar event for completed bucket list item: \(bucketListItem.title)")
+        } catch {
+            let errorMsg = "Failed to create event from bucket list item: \(error.localizedDescription)"
+            errorMessage = errorMsg
+            print("CalendarManager Error: \(errorMsg)")
+            throw error
+        }
+
+        isLoading = false
+    }
+
+    func deleteEventForBucketListItem(_ bucketListItemId: String, coupleId: String) async throws {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            // Find the event that corresponds to this bucket list item
+            let querySnapshot = try await db.collection("events")
+                .whereField("coupleId", isEqualTo: coupleId)
+                .whereField("bucketListItemId", isEqualTo: bucketListItemId)
+                .getDocuments()
+
+            for document in querySnapshot.documents {
+                let event = try document.data(as: CalendarEvent.self)
+
+                // Delete photos from S3 if any
+                if !event.photoURLs.isEmpty {
+                    await s3Manager.deletePhotos(keys: event.photoURLs)
+                }
+
+                // Delete the event document
+                try await db.collection("events").document(document.documentID).delete()
+
+                // Remove from local array
+                events.removeAll { $0.id == document.documentID }
+
+                print("Successfully deleted calendar event for bucket list item: \(bucketListItemId)")
+            }
+        } catch {
+            let errorMsg = "Failed to delete event for bucket list item: \(error.localizedDescription)"
+            errorMessage = errorMsg
+            print("CalendarManager Error: \(errorMsg)")
+            throw error
+        }
+
+        isLoading = false
+    }
 }

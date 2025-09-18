@@ -5,8 +5,10 @@ struct BucketListView: View {
     @ObservedObject var userManager: UserManager
     @StateObject private var bucketListManager = BucketListManager()
     @StateObject private var userSession = UserSession.shared
+    @StateObject private var calendarManager = CalendarManager()
     @State private var showingAddItem = false
     @State private var showAlert = false
+    @State private var selectedItem: BucketListItem?
 
     private var bucketListId: String? {
         userSession.bucketListId
@@ -14,6 +16,14 @@ struct BucketListView: View {
 
     private var isInCouple: Bool {
         userSession.isInCouple
+    }
+
+    private var incompleteItems: [BucketListItem] {
+        bucketListManager.bucketItems.filter { !$0.isCompleted }
+    }
+
+    private var completedItems: [BucketListItem] {
+        bucketListManager.bucketItems.filter { $0.isCompleted }
     }
 
     var body: some View {
@@ -87,14 +97,57 @@ struct BucketListView: View {
                 .padding(.vertical, 50)
                 .listRowSeparator(.hidden)
             } else {
-                ForEach(bucketListManager.bucketItems) { item in
-                    BucketListItemRow(item: item) {
-                        toggleItemCompletion(item)
+                // Incomplete Items Section
+                if !incompleteItems.isEmpty {
+                    Section("To Do") {
+                        ForEach(incompleteItems) { item in
+                            Button {
+                                selectedItem = item
+                            } label: {
+                                BucketListItemRow(
+                                    item: item,
+                                    onToggle: {
+                                        completeItem(item)
+                                    },
+                                    onComplete: {
+                                        completeItem(item)
+                                    }
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                        .onDelete { offsets in
+                            if let bucketListId = bucketListId {
+                                deleteIncompleteItems(offsets: offsets, bucketListId: bucketListId)
+                            }
+                        }
                     }
                 }
-                .onDelete { offsets in
-                    if let bucketListId = bucketListId {
-                        deleteItems(offsets: offsets, bucketListId: bucketListId)
+
+                // Completed Items Section
+                if !completedItems.isEmpty {
+                    Section("Completed") {
+                        ForEach(completedItems) { item in
+                            Button {
+                                selectedItem = item
+                            } label: {
+                                BucketListItemRow(
+                                    item: item,
+                                    onToggle: {
+                                        uncompleteItem(item)
+                                    },
+                                    onComplete: {
+                                        toggleItemCompletion(item)
+                                    }
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                        .onDelete { offsets in
+                            if let bucketListId = bucketListId {
+                                deleteCompletedItems(offsets: offsets, bucketListId: bucketListId)
+                            }
+                        }
                     }
                 }
             }
@@ -103,6 +156,9 @@ struct BucketListView: View {
             await refreshBucketList()
         }
         .listStyle(PlainListStyle())
+        .sheet(item: $selectedItem) { item in
+            BucketListItemDetailView(bucketListItem: .constant(item), bucketListManager: bucketListManager)
+        }
     }
 
     private var noCoupleView: some View {
@@ -158,8 +214,90 @@ struct BucketListView: View {
         }
     }
 
+    private func completeItem(_ item: BucketListItem) {
+        guard let bucketListId = userSession.bucketListId else { return }
+
+        Task {
+            do {
+                print("Completing item: \(item.title), current status: \(item.isCompleted)")
+
+                // Create completed version of the item (same as detail view)
+                var completedItem = item
+                completedItem.isCompleted = true
+                completedItem.completedAt = Date()
+
+                // Update using the same method as detail view
+                try await bucketListManager.updateBucketListItem(bucketListId: bucketListId, item: completedItem)
+                print("Successfully updated item completion in bucket list manager")
+
+                // Create a calendar event for the completed item
+                if let coupleId = userSession.coupleId {
+                    try await calendarManager.createEventFromBucketListItem(completedItem, coupleId: coupleId)
+                    print("Successfully created calendar event")
+                }
+            } catch {
+                print("Failed to complete item: \(error)")
+            }
+        }
+    }
+
+    private func uncompleteItem(_ item: BucketListItem) {
+        guard let bucketListId = userSession.bucketListId else { return }
+
+        Task {
+            do {
+                print("Uncompleting item: \(item.title), current status: \(item.isCompleted)")
+
+                // Remove the calendar event if it exists
+                if let coupleId = userSession.coupleId {
+                    try await calendarManager.deleteEventForBucketListItem(item.id, coupleId: coupleId)
+                    print("Successfully removed calendar event")
+                }
+
+                // Create incomplete version of the item (same as detail view)
+                var incompleteItem = item
+                incompleteItem.isCompleted = false
+                incompleteItem.completedAt = nil
+
+                // Update using the same method as detail view
+                try await bucketListManager.updateBucketListItem(bucketListId: bucketListId, item: incompleteItem)
+                print("Successfully updated item completion in bucket list manager")
+            } catch {
+                print("Failed to uncomplete item: \(error)")
+            }
+        }
+    }
+
     private func deleteItems(offsets: IndexSet, bucketListId: String) {
         bucketListManager.deleteBucketItems(at: offsets, bucketListId: bucketListId)
+    }
+
+    private func deleteIncompleteItems(offsets: IndexSet, bucketListId: String) {
+        // Convert section-specific offsets to full list offsets
+        let itemsToDelete = Array(offsets).compactMap { index in
+            index < incompleteItems.count ? incompleteItems[index] : nil
+        }
+
+        // Find the actual indices in the full bucket list
+        let fullListOffsets = IndexSet(itemsToDelete.compactMap { item in
+            bucketListManager.bucketItems.firstIndex(where: { $0.id == item.id })
+        })
+
+        bucketListManager.deleteBucketItems(at: fullListOffsets, bucketListId: bucketListId)
+    }
+
+    private func deleteCompletedItems(offsets: IndexSet, bucketListId: String) {
+        // Convert section-specific offsets to full list offsets
+        let itemsToDelete = Array(offsets).compactMap { index in
+            index < completedItems.count ? completedItems[index] : nil
+        }
+
+        // Find the actual indices in the full bucket list
+        let fullListOffsets = IndexSet(itemsToDelete.compactMap { item in
+            bucketListManager.bucketItems.firstIndex(where: { $0.id == item.id })
+        })
+
+        bucketListManager.deleteBucketItems(at: fullListOffsets, bucketListId: bucketListId)
     }
 
     private func refreshBucketList() async {
@@ -171,10 +309,20 @@ struct BucketListView: View {
 struct BucketListItemRow: View {
     let item: BucketListItem
     let onToggle: () -> Void
+    let onComplete: () -> Void
+
+    @State private var showingCompletionDialog = false
+    @State private var showingUncompleteConfirmation = false
 
     var body: some View {
         HStack {
-            Button(action: onToggle) {
+            Button(action: {
+                if item.isCompleted {
+                    showingUncompleteConfirmation = true
+                } else {
+                    showingCompletionDialog = true
+                }
+            }) {
                 Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(item.isCompleted ? .green : .gray)
                     .font(.title2)
@@ -204,6 +352,22 @@ struct BucketListItemRow: View {
             Spacer()
         }
         .contentShape(Rectangle())
+        .alert("Mark as Complete?", isPresented: $showingCompletionDialog) {
+            Button("Cancel", role: .cancel) { }
+            Button("Mark Complete") {
+                onComplete()
+            }
+        } message: {
+            Text("This will mark '\(item.title)' as completed and create a post on your profile.")
+        }
+        .alert("Mark as Incomplete?", isPresented: $showingUncompleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Mark Incomplete", role: .destructive) {
+                onToggle()
+            }
+        } message: {
+            Text("This will mark the item as incomplete and delete the post from your profile.")
+        }
     }
 }
 

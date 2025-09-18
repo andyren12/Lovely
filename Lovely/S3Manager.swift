@@ -196,6 +196,90 @@ class S3Manager: ObservableObject {
         }
     }
 
+    // MARK: - Bucket List Item Photo Upload
+
+    func uploadBucketListPhoto(_ image: UIImage, bucketListItemId: String, photoIndex: Int) async throws -> String {
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            throw S3Error.imageCompressionFailed
+        }
+
+        let key = "bucket-list-items/\(bucketListItemId)/photo_\(Date().timeIntervalSince1970)_\(photoIndex).jpg"
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let uploadRequest = AWSS3PutObjectRequest()!
+            uploadRequest.bucket = bucketName
+            uploadRequest.key = key
+            uploadRequest.contentType = "image/jpeg"
+            uploadRequest.contentLength = NSNumber(value: imageData.count)
+
+            // Create a temporary file for the upload
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".jpg")
+
+            do {
+                try imageData.write(to: tempURL)
+                uploadRequest.body = tempURL
+
+                let s3 = AWSS3.default()
+                s3.putObject(uploadRequest).continueWith { task in
+                    // Clean up temp file
+                    try? FileManager.default.removeItem(at: tempURL)
+
+                    DispatchQueue.main.async {
+                        if let error = task.error {
+                            continuation.resume(throwing: error)
+                        } else {
+                            // Return just the key instead of full URL
+                            continuation.resume(returning: key)
+                        }
+                    }
+                    return nil
+                }
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+
+    func uploadPhotos(_ images: [UIImage], bucketListItemId: String) async throws -> [String] {
+        var uploadedURLs: [String] = []
+
+        for (index, image) in images.enumerated() {
+            do {
+                let url = try await uploadBucketListPhoto(image, bucketListItemId: bucketListItemId, photoIndex: index)
+                uploadedURLs.append(url)
+            } catch {
+                print("Failed to upload bucket list photo \(index): \(error)")
+                // Continue with other photos even if one fails
+            }
+        }
+
+        return uploadedURLs
+    }
+
+    // MARK: - Image Download
+
+    func downloadImage(key: String) async -> UIImage? {
+        do {
+            let signedURL = try await getSignedURL(for: key)
+            let (data, response) = try await URLSession.shared.data(from: signedURL)
+
+            if let httpResponse = response as? HTTPURLResponse {
+                print("HTTP Status: \(httpResponse.statusCode) for key: \(key)")
+            }
+
+            if let image = UIImage(data: data) {
+                print("Successfully downloaded image for key: \(key)")
+                return image
+            } else {
+                print("Failed to create image from data for key: \(key)")
+                return nil
+            }
+        } catch {
+            print("Failed to download image for key \(key): \(error)")
+            return nil
+        }
+    }
+
     // MARK: - Helper Methods
 
     func extractKeyFromURL(_ url: String) -> String? {

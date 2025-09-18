@@ -40,12 +40,19 @@ struct ProfileView: View {
 
     private var filteredEvents: [CalendarEvent] {
         let hideEventsWithoutPhotos = userSession.userSettings?.hideEventsWithoutPhotos ?? false
+        let today = Date()
+
+        var events = calendarManager.events.filter { event in
+            // Only show events that occur on or before today
+            Calendar.current.startOfDay(for: event.date) <= Calendar.current.startOfDay(for: today)
+        }
 
         if hideEventsWithoutPhotos {
-            return calendarManager.events.filter { !$0.photoURLs.isEmpty }
-        } else {
-            return calendarManager.events
+            events = events.filter { !$0.photoURLs.isEmpty }
         }
+
+        // Sort by date in descending order (most recent first)
+        return events.sorted { $0.date > $1.date }
     }
 
     private var eventsGridView: some View {

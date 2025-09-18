@@ -8,6 +8,7 @@ class BucketListManager: ObservableObject {
     @Published var errorMessage: String?
 
     private let db = Firestore.firestore()
+    private let s3Manager = S3Manager.shared
 
     var bucketItems: [BucketListItem] {
         bucketList?.items ?? []
@@ -116,6 +117,12 @@ class BucketListManager: ObservableObject {
         errorMessage = nil
 
         do {
+            // Delete photos from S3 first
+            if !item.photoURLs.isEmpty {
+                await s3Manager.deletePhotos(keys: item.photoURLs)
+                print("Deleted \(item.photoURLs.count) photos from S3 for bucket list item: \(item.title)")
+            }
+
             var updatedItems = bucketList.items
             updatedItems.removeAll { $0.id == item.id }
 
@@ -155,6 +162,54 @@ class BucketListManager: ObservableObject {
         isLoading = false
     }
 
+    func updateBucketListItem(bucketListId: String, item: BucketListItem) async throws {
+        guard let bucketList = bucketList,
+              let itemIndex = bucketList.items.firstIndex(where: { $0.id == item.id }) else {
+            throw NSError(domain: "BucketListManager", code: 404, userInfo: [NSLocalizedDescriptionKey: "Item not found"])
+        }
+
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            var updatedBucketList = bucketList
+            updatedBucketList.items[itemIndex] = item
+            updatedBucketList.updatedAt = Date()
+
+            try db.collection("bucketLists").document(bucketListId).setData(from: updatedBucketList)
+            self.bucketList = updatedBucketList
+            cacheBucketList(updatedBucketList)
+        } catch {
+            errorMessage = "Failed to update bucket list item: \(error.localizedDescription)"
+            throw error
+        }
+
+        isLoading = false
+    }
+
+    func updateBucketListItemDirect(bucketListId: String, item: BucketListItem) async throws {
+        // Load the bucket list first to ensure we have the latest data
+        let document = try await db.collection("bucketLists").document(bucketListId).getDocument()
+
+        guard document.exists,
+              var bucketList = try? document.data(as: BucketList.self) else {
+            throw NSError(domain: "BucketListManager", code: 404, userInfo: [NSLocalizedDescriptionKey: "Bucket list not found"])
+        }
+
+        // Find and update the item
+        guard let itemIndex = bucketList.items.firstIndex(where: { $0.id == item.id }) else {
+            throw NSError(domain: "BucketListManager", code: 404, userInfo: [NSLocalizedDescriptionKey: "Item not found in bucket list"])
+        }
+
+        // Update the item and save back to Firestore
+        bucketList.items[itemIndex] = item
+        bucketList.updatedAt = Date()
+
+        try db.collection("bucketLists").document(bucketListId).setData(from: bucketList)
+
+        print("Successfully updated bucket list item: \(item.title)")
+    }
+
 }
 
 // MARK: - Extensions for Array Operations
@@ -171,6 +226,14 @@ extension BucketListManager {
                 // Get items to delete based on current bucket list state
                 let itemsToDelete = offsets.compactMap { index in
                     index < bucketList.items.count ? bucketList.items[index] : nil
+                }
+
+                // Delete photos from S3 for all items being deleted
+                for item in itemsToDelete {
+                    if !item.photoURLs.isEmpty {
+                        await s3Manager.deletePhotos(keys: item.photoURLs)
+                        print("Deleted \(item.photoURLs.count) photos from S3 for bucket list item: \(item.title)")
+                    }
                 }
 
                 // Remove all selected items at once
