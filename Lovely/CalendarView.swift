@@ -725,12 +725,35 @@ struct SwipeableEventRow: View {
     @State private var offset: CGFloat = 0
     @State private var showingContextMenu = false
 
-    private let maxDragDistance: CGFloat = 80
-    private let deleteThreshold: CGFloat = 40
+    private let deleteButtonWidth: CGFloat = 70
+    private let deleteThreshold: CGFloat = 35
 
     var body: some View {
-        HStack(spacing: 0) {
-            // Event row
+        ZStack(alignment: .trailing) {
+            // Delete button (behind the event row)
+            HStack {
+                Spacer()
+                Button(action: {
+                    onDelete()
+                    offset = 0
+                }) {
+                    VStack(spacing: 4) {
+                        Image(systemName: "trash")
+                            .font(.title2)
+                        Text("Delete")
+                            .font(.caption)
+                    }
+                    .foregroundColor(.white)
+                    .frame(width: deleteButtonWidth)
+                    .frame(maxHeight: .infinity)
+                    .background(Color.red)
+                    .cornerRadius(12)
+                }
+                .opacity(offset < -10 ? 1 : 0)
+                .animation(.easeInOut(duration: 0.2), value: offset)
+            }
+
+            // Event row (moves to reveal delete button)
             EventRow(event: event)
                 .offset(x: offset)
                 .animation(.interpolatingSpring(stiffness: 300, damping: 30), value: offset)
@@ -752,9 +775,9 @@ struct SwipeableEventRow: View {
                     DragGesture()
                         .onChanged { value in
                             let translation = value.translation.width
-                            // Only allow left swipe
+                            // Only allow left swipe, limit to delete button width
                             if translation <= 0 {
-                                offset = max(-maxDragDistance, translation)
+                                offset = max(-deleteButtonWidth, translation)
                             }
                         }
                         .onEnded { value in
@@ -763,32 +786,12 @@ struct SwipeableEventRow: View {
 
                             // Determine final position based on translation and velocity
                             if translation < -deleteThreshold || velocity < -100 {
-                                offset = -maxDragDistance
+                                offset = -deleteButtonWidth
                             } else {
                                 offset = 0
                             }
                         }
                 )
-
-            // Delete button
-            if offset < 0 {
-                Button(action: {
-                    onDelete()
-                    offset = 0
-                }) {
-                    VStack(spacing: 4) {
-                        Image(systemName: "trash")
-                            .font(.title2)
-                        Text("Delete")
-                            .font(.caption)
-                    }
-                    .foregroundColor(.white)
-                    .frame(width: -offset, height: 60)
-                    .background(Color.red)
-                    .cornerRadius(12)
-                }
-                .transition(.move(edge: .trailing))
-            }
         }
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .confirmationDialog("Delete Event", isPresented: $showingContextMenu) {
