@@ -45,6 +45,8 @@
 		FB37BE6A2E7B9DCB005BEF13 /* SMSManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE692E7B9DCB005BEF13 /* SMSManager.swift */; };
 		FB37BE6D2E7C679E005BEF13 /* BucketListItemDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE6B2E7C679E005BEF13 /* BucketListItemDetailView.swift */; };
 		FB37BE6E2E7C679E005BEF13 /* UserSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE6C2E7C679E005BEF13 /* UserSetupView.swift */; };
+		FB37BE712E7C881C005BEF13 /* CalendarBucketListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE6F2E7C881C005BEF13 /* CalendarBucketListView.swift */; };
+		FB37BE722E7C881C005BEF13 /* WidgetsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE702E7C881C005BEF13 /* WidgetsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -103,6 +105,8 @@
 		FB37BE692E7B9DCB005BEF13 /* SMSManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SMSManager.swift; sourceTree = "<group>"; };
 		FB37BE6B2E7C679E005BEF13 /* BucketListItemDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BucketListItemDetailView.swift; sourceTree = "<group>"; };
 		FB37BE6C2E7C679E005BEF13 /* UserSetupView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserSetupView.swift; sourceTree = "<group>"; };
+		FB37BE6F2E7C881C005BEF13 /* CalendarBucketListView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CalendarBucketListView.swift; sourceTree = "<group>"; };
+		FB37BE702E7C881C005BEF13 /* WidgetsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WidgetsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -158,6 +162,8 @@
 		FB082E082E753332003CF621 /* Lovely */ = {
 			isa = PBXGroup;
 			children = (
+				FB37BE6F2E7C881C005BEF13 /* CalendarBucketListView.swift */,
+				FB37BE702E7C881C005BEF13 /* WidgetsView.swift */,
 				FB37BE6B2E7C679E005BEF13 /* BucketListItemDetailView.swift */,
 				FB37BE6C2E7C679E005BEF13 /* UserSetupView.swift */,
 				FB37BE692E7B9DCB005BEF13 /* SMSManager.swift */,
@@ -369,8 +375,10 @@
 				FB37BE532E776500005BEF13 /* BucketListView.swift in Sources */,
 				FB37BE552E776501005BEF13 /* CalendarView.swift in Sources */,
 				FB37BE572E776600005BEF13 /* BucketListManager.swift in Sources */,
+				FB37BE722E7C881C005BEF13 /* WidgetsView.swift in Sources */,
 				FB37BE532E788EDF005BEF13 /* UserSession.swift in Sources */,
 				FB082E4D2E7550A8003CF621 /* PartnerInviteView.swift in Sources */,
+				FB37BE712E7C881C005BEF13 /* CalendarBucketListView.swift in Sources */,
 				FB37BE642E7B88C7005BEF13 /* PostView.swift in Sources */,
 				FB082E4F2E7550A8003CF621 /* UserProfileSetupView.swift in Sources */,
 				FB37BE6D2E7C679E005BEF13 /* BucketListItemDetailView.swift in Sources */,

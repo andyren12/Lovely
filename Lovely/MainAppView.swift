@@ -8,14 +8,14 @@ struct MainAppView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            BucketListView(authManager: authManager, userManager: userManager)
+            WidgetsView(authManager: authManager, userManager: userManager)
                 .tabItem {
-                    Image(systemName: "list.clipboard")
-                    Text("Bucket List")
+                    Image(systemName: "rectangle.3.group")
+                    Text("Widgets")
                 }
                 .tag(0)
 
-            CalendarView(authManager: authManager, userManager: userManager)
+            CalendarBucketListView(authManager: authManager, userManager: userManager)
                 .environmentObject(deepLinkManager)
                 .tabItem {
                     Image(systemName: "calendar")
