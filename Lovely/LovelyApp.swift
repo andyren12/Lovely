@@ -97,6 +97,12 @@ struct LovelyApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onOpenURL { url in
+                    print("🔗 App - Received URL via onOpenURL: \(url.absoluteString)")
+                    let handled = DeepLinkManager.shared.handleDeepLink(url)
+                    print("🔗 App - Deep link handled: \(handled)")
+                }
         }
+        
     }
 }

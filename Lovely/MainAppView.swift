@@ -3,7 +3,7 @@ import SwiftUI
 struct MainAppView: View {
     @ObservedObject var authManager: AuthManager
     @ObservedObject var userManager: UserManager
-    @StateObject private var deepLinkManager = DeepLinkManager.shared
+    @EnvironmentObject var deepLinkManager: DeepLinkManager
     @State private var selectedTab = 1
 
     var body: some View {

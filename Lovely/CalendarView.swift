@@ -11,7 +11,6 @@ struct CalendarView: View {
     @State private var showingAddEvent = false
     @State private var showingDatePicker = false
     @State private var selectedEvent: CalendarEvent?
-    @State private var showingEventDetail = false
     @State private var eventToDelete: CalendarEvent?
     @State private var showingDeleteConfirmation = false
 
@@ -140,10 +139,14 @@ struct CalendarView: View {
             DatePickerSheet(selectedDate: $selectedDate)
         }
         .sheet(isPresented: $showingAddEvent) {
-            AddEventView(selectedDate: selectedDate) { event in
+            AddEventView(selectedDate: selectedDate, calendarManager: calendarManager) { event in
                 Task {
                     if let coupleId = userSession.coupleId {
-                        try? await calendarManager.addEvent(event, coupleId: coupleId)
+                        do {
+                            try await calendarManager.addEvent(event, coupleId: coupleId)
+                        } catch {
+                            print("❌ Failed to add event: \(error)")
+                        }
                     }
                 }
             }
@@ -172,9 +175,13 @@ struct CalendarView: View {
             loadEvents()
         }
         .onChange(of: deepLinkManager.shouldNavigateToEvent) {
+            print("🔗 Deep Link - shouldNavigateToEvent changed to: \(deepLinkManager.shouldNavigateToEvent)")
             if deepLinkManager.shouldNavigateToEvent, let eventId = deepLinkManager.pendingEventId {
+                print("🔗 Deep Link - Attempting to navigate to event: '\(eventId)'")
                 navigateToEvent(eventId: eventId)
                 deepLinkManager.clearPendingNavigation()
+            } else if deepLinkManager.shouldNavigateToEvent {
+                print("❌ Deep Link - shouldNavigateToEvent is true but no pendingEventId")
             }
         }
         .confirmationDialog(
@@ -189,6 +196,33 @@ struct CalendarView: View {
         } message: { event in
             Text("Are you sure you want to delete '\(event.title)'? This will also delete all photos associated with this event.")
         }
+        .overlay(
+            // SMS clipboard notification
+            Group {
+                if SMSManager.shared.showClipboardNotification {
+                    VStack {
+                        Spacer()
+
+                        HStack {
+                            Image(systemName: "doc.on.clipboard")
+                                .foregroundColor(.white)
+                            Text("Message copied to clipboard")
+                                .foregroundColor(.white)
+                                .font(.subheadline)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.black.opacity(0.8))
+                        )
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                    .padding(.bottom, 50)
+                    .animation(.easeInOut(duration: 0.3), value: SMSManager.shared.showClipboardNotification)
+                }
+            }
+        )
     }
 
     private func loadEvents() {
@@ -222,12 +256,46 @@ struct CalendarView: View {
     }
 
     private func navigateToEvent(eventId: String) {
+        print("🔗 Deep Link - Looking for event '\(eventId)' in \(calendarManager.events.count) loaded events")
+
         // Find the event in the loaded events
         if let event = calendarManager.events.first(where: { $0.id == eventId }) {
-            selectedEvent = event
-            showingEventDetail = true
+            print("✅ Deep Link - Found event: '\(event.title)' with ID: '\(event.id ?? "nil")'")
+
+            // Add delay to ensure UI is ready
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.selectedEvent = event
+                print("🔗 Deep Link - Set selectedEvent, should trigger sheet")
+            }
         } else {
-            print("Event with ID \(eventId) not found in loaded events")
+            print("❌ Deep Link - Event with ID '\(eventId)' not found in loaded events")
+            print("🔗 Deep Link - Available event IDs: \(calendarManager.events.compactMap { $0.id })")
+
+            // Try to load events and then navigate
+            print("🔗 Deep Link - Attempting to load events first...")
+            Task {
+                if let coupleId = userSession.coupleId {
+                    await calendarManager.loadEventsWithCache(for: coupleId)
+
+                    // Try again after loading
+                    await MainActor.run {
+                        if let event = calendarManager.events.first(where: { $0.id == eventId }) {
+                            print("✅ Deep Link - Found event after reload: '\(event.title)' with ID: '\(event.id ?? "nil")'")
+
+                            // Add delay to ensure UI is ready
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                self.selectedEvent = event
+                                print("🔗 Deep Link - Set selectedEvent after reload, should trigger sheet")
+                            }
+                        } else {
+                            print("❌ Deep Link - Event still not found after reload")
+                            print("🔗 Deep Link - Final available event IDs: \(calendarManager.events.compactMap { $0.id })")
+                        }
+                    }
+                } else {
+                    print("❌ Deep Link - No couple ID available")
+                }
+            }
         }
     }
 }
@@ -416,6 +484,7 @@ struct DatePickerSheet: View {
 struct AddEventView: View {
     @Environment(\.dismiss) private var dismiss
     let selectedDate: Date
+    let calendarManager: CalendarManager
     let onAdd: (CalendarEvent) -> Void
 
     @State private var title = ""
@@ -671,18 +740,23 @@ struct AddEventView: View {
                 print("Successfully uploaded \(uploadedKeys.count) photos for new event")
             }
 
+            // Store SMS info before adding event
+            let shouldSendSMS = shouldTextPartner
+            let currentUser = UserSession.shared.userProfile
+            let partnerProfile = UserSession.shared.partnerProfile
+
             // Add the event
             onAdd(event)
 
-            // Send SMS if enabled and partner phone number is available
-            if shouldTextPartner {
+            // Send SMS after event is added (which should assign an ID)
+            if shouldSendSMS {
                 print("🔍 Event Creation Debug - SMS toggle is ON")
-                print("🔍 Event Creation Debug - Current user: \(UserSession.shared.userProfile?.fullName ?? "nil")")
-                print("🔍 Event Creation Debug - Partner profile: \(UserSession.shared.partnerProfile?.fullName ?? "nil")")
-                print("🔍 Event Creation Debug - Partner phone: '\(UserSession.shared.partnerProfile?.phoneNumber ?? "nil")'")
+                print("🔍 Event Creation Debug - Current user: \(currentUser?.fullName ?? "nil")")
+                print("🔍 Event Creation Debug - Partner profile: \(partnerProfile?.fullName ?? "nil")")
+                print("🔍 Event Creation Debug - Partner phone: '\(partnerProfile?.phoneNumber ?? "nil")'")
 
-                guard let currentUser = UserSession.shared.userProfile,
-                      let partnerProfile = UserSession.shared.partnerProfile,
+                guard let currentUser = currentUser,
+                      let partnerProfile = partnerProfile,
                       let partnerPhone = partnerProfile.phoneNumber,
                       !partnerPhone.isEmpty else {
                     print("❌ Event Creation Debug - Cannot send SMS: Missing user profile or partner phone number")
@@ -696,12 +770,38 @@ struct AddEventView: View {
                     return
                 }
 
-                print("✅ Event Creation Debug - All SMS prerequisites met, calling SMSManager")
-                smsManager.sendEventNotification(
-                    to: partnerPhone,
-                    event: event,
-                    senderName: currentUser.firstName
-                )
+                // Wait for the event to be added, then find it with the assigned ID
+                Task {
+                    // Wait a moment for the event to be processed
+                    try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+
+                    await MainActor.run {
+                        // Find the saved event with ID
+                        print("🔍 Event Creation Debug - Searching for event titled '\(event.title)' in \(calendarManager.events.count) events")
+                        print("🔍 Event Creation Debug - Available events: \(calendarManager.events.map { "\($0.title) - ID: \($0.id ?? "nil")" })")
+
+                        if let savedEvent = calendarManager.events.first(where: {
+                            $0.title == event.title &&
+                            Calendar.current.isDate($0.date, equalTo: event.date, toGranularity: .minute)
+                        }) {
+                            print("✅ Event Creation Debug - Found saved event with ID: '\(savedEvent.id ?? "nil")'")
+                            print("🔍 Event Creation Debug - Using saved event for SMS")
+                            smsManager.sendEventNotification(
+                                to: partnerPhone,
+                                event: savedEvent,
+                                senderName: currentUser.firstName
+                            )
+                        } else {
+                            print("❌ Event Creation Debug - Could not find saved event, using original")
+                            print("🔍 Event Creation Debug - Original event ID: '\(event.id ?? "nil")'")
+                            smsManager.sendEventNotification(
+                                to: partnerPhone,
+                                event: event,
+                                senderName: currentUser.firstName
+                            )
+                        }
+                    }
+                }
             } else {
                 print("🔍 Event Creation Debug - SMS toggle is OFF")
             }

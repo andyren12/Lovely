@@ -9,6 +9,7 @@ class SMSManager: NSObject, ObservableObject {
     @Published var isShowingMessageComposer = false
     @Published var messageRecipients: [String] = []
     @Published var messageBody: String = ""
+    @Published var showClipboardNotification = false
 
     private override init() {
         super.init()
@@ -38,7 +39,9 @@ class SMSManager: NSObject, ObservableObject {
         print("🔍 SMS Debug - Event: '\(event.title)'")
         print("🔍 SMS Debug - Sender: '\(senderName)'")
 
-        let eventLink = DeepLinkManager.shared.createEventDeepLink(eventId: event.id ?? "")
+        let eventId = event.id ?? "no-id"
+        print("🔗 SMS Debug - Creating deep link for event ID: '\(eventId)'")
+        let eventLink = DeepLinkManager.shared.createEventDeepLink(eventId: eventId)
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .medium
         dateFormatter.timeStyle = event.isAllDay ? .none : .short
@@ -49,7 +52,7 @@ class SMSManager: NSObject, ObservableObject {
         📅 \(dateFormatter.string(from: event.date))
         \(event.description.isEmpty ? "" : "\n\(event.description)")
 
-        Tap to view: \(eventLink)
+        Open event: \(eventLink)
         """
 
         print("🔍 SMS Debug - Message content: \(message)")
@@ -63,20 +66,57 @@ class SMSManager: NSObject, ObservableObject {
         // Clean phone number (remove any formatting)
         let cleanedPhoneNumber = phoneNumber.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
 
-        // URL encode the message
+        print("🔍 SMS Debug - Original message: \(message)")
+
+        // URL encode the message properly to preserve deep links
         guard let encodedMessage = message.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
-            print("❌ Failed to encode SMS message")
+            print("❌ Failed to encode message")
             return
         }
 
-        // Create SMS URL
-        let smsURL = "sms:\(cleanedPhoneNumber)&body=\(encodedMessage)"
+        let smsURL = "sms:\(cleanedPhoneNumber)?body=\(encodedMessage)"
+        print("🔍 SMS URL with message: \(smsURL)")
 
-        print("🔍 SMS URL: \(smsURL)")
+        guard let url = URL(string: smsURL) else {
+            print("❌ Invalid SMS URL, falling back to clipboard method")
+            fallbackToClipboard(phoneNumber: cleanedPhoneNumber, message: message)
+            return
+        }
+
+        // Open the SMS app with pre-filled message
+        DispatchQueue.main.async {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url) { success in
+                    if success {
+                        print("✅ Successfully opened SMS app with message")
+                    } else {
+                        print("❌ Failed to open SMS app with message, trying fallback")
+                        self.fallbackToClipboard(phoneNumber: cleanedPhoneNumber, message: message)
+                    }
+                }
+            } else {
+                print("❌ Cannot open SMS URL with message, trying fallback")
+                self.fallbackToClipboard(phoneNumber: cleanedPhoneNumber, message: message)
+            }
+        }
+    }
+
+    private func fallbackToClipboard(phoneNumber: String, message: String) {
+        let smsURL = "sms:\(phoneNumber)"
 
         guard let url = URL(string: smsURL) else {
             print("❌ Invalid SMS URL")
             return
+        }
+
+        // Copy message to clipboard so user can paste it
+        UIPasteboard.general.string = message
+        print("✅ Copied message to clipboard")
+
+        // Show notification that message was copied
+        showClipboardNotification = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            self.showClipboardNotification = false
         }
 
         // Open the SMS app
@@ -85,6 +125,7 @@ class SMSManager: NSObject, ObservableObject {
                 UIApplication.shared.open(url) { success in
                     if success {
                         print("✅ Successfully opened SMS app")
+                        print("💡 Message copied to clipboard - paste in SMS")
                     } else {
                         print("❌ Failed to open SMS app")
                     }

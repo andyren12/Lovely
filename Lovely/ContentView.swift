@@ -17,14 +17,18 @@ struct ContentView: View {
             if authManager.isAuthenticated {
                 if authManager.needsProfileSetup {
                     UserProfileSetupView(authManager: authManager, userManager: userManager)
+                        .environmentObject(deepLinkManager)
                 } else if authManager.isNewUser {
                     PartnerInviteView(authManager: authManager, userManager: userManager)
+                        .environmentObject(deepLinkManager)
                 } else {
                     MainAppView(authManager: authManager, userManager: userManager)
+                        .environmentObject(deepLinkManager)
                 }
             } else {
                 AuthView()
                     .environmentObject(authManager)
+                    .environmentObject(deepLinkManager)
             }
         }
     }
