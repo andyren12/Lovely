@@ -8,6 +8,7 @@ struct WidgetConfigurationData: Codable {
     let photos: [WidgetPhotoConfigData]
     let selectedEventIds: [String]
     let lastUpdated: Date
+    let customTitle: String?
 }
 
 struct WidgetPhotoConfigData: Codable {
@@ -28,7 +29,7 @@ class WidgetDataManager {
 
     // MARK: - Widget Configuration
 
-    func updateWidgetConfiguration(selectedEvents: [CalendarEvent], for widgetType: WidgetType = .allEvents) {
+    func updateWidgetConfiguration(selectedEvents: [CalendarEvent], for widgetType: WidgetType = .widget1) {
         guard let containerURL = sharedContainerURL else {
             print("❌ Failed to get shared container URL")
             return
@@ -37,11 +38,8 @@ class WidgetDataManager {
         Task { @MainActor in
             var widgetPhotos: [WidgetPhotoConfigData] = []
 
-            // Filter events based on widget type
-            let filteredEvents = filterEvents(selectedEvents, for: widgetType)
-
-            // Process each filtered event
-            for event in filteredEvents {
+            // Process all selected events (no filtering)
+            for event in selectedEvents {
                 // Only include events with photos
                 guard !event.photoURLs.isEmpty else { continue }
 
@@ -67,10 +65,21 @@ class WidgetDataManager {
                 widgetPhotos = Array(widgetPhotos.prefix(maxPhotos))
             }
 
+            // Load existing configuration to preserve custom title
+            let fileURL = containerURL.appendingPathComponent(widgetType.fileName)
+            let existingTitle: String?
+            if let data = try? Data(contentsOf: fileURL),
+               let existingConfig = try? JSONDecoder().decode(WidgetConfigurationData.self, from: data) {
+                existingTitle = existingConfig.customTitle
+            } else {
+                existingTitle = nil
+            }
+
             let configuration = WidgetConfigurationData(
                 photos: widgetPhotos,
                 selectedEventIds: selectedEvents.compactMap { $0.id },
-                lastUpdated: Date()
+                lastUpdated: Date(),
+                customTitle: existingTitle
             )
 
             // Save configuration to shared container
@@ -82,14 +91,14 @@ class WidgetDataManager {
                 // Tell WidgetKit to reload the specific widget
                 WidgetCenter.shared.reloadTimelines(ofKind: getWidgetKind(for: widgetType))
 
-                print("✅ \(widgetType.displayName) widget configuration updated with \(widgetPhotos.count) photos")
+                print("✅ \(widgetType.defaultTitle) widget configuration updated with \(widgetPhotos.count) photos")
             } catch {
-                print("❌ Failed to save \(widgetType.displayName) widget configuration: \(error)")
+                print("❌ Failed to save \(widgetType.defaultTitle) widget configuration: \(error)")
             }
         }
     }
 
-    func clearWidgetConfiguration(for widgetType: WidgetType = .allEvents) {
+    func clearWidgetConfiguration(for widgetType: WidgetType = .widget1) {
         guard let containerURL = sharedContainerURL else { return }
 
         let fileURL = containerURL.appendingPathComponent(widgetType.fileName)
@@ -98,7 +107,7 @@ class WidgetDataManager {
         // Reload widget to show empty state
         WidgetCenter.shared.reloadTimelines(ofKind: getWidgetKind(for: widgetType))
 
-        print("✅ \(widgetType.displayName) widget configuration cleared")
+        print("✅ \(widgetType.defaultTitle) widget configuration cleared")
     }
 
     func clearAllWidgetConfigurations() {
@@ -111,6 +120,56 @@ class WidgetDataManager {
         for widgetType in WidgetType.allCases {
             updateWidgetConfiguration(selectedEvents: selectedEvents, for: widgetType)
         }
+    }
+
+    // MARK: - Widget Title Management
+
+    func setWidgetTitle(_ title: String, for widgetType: WidgetType) {
+        guard let containerURL = sharedContainerURL else { return }
+
+        let fileURL = containerURL.appendingPathComponent(widgetType.fileName)
+
+        // Load existing configuration or create new one
+        var configuration: WidgetConfigurationData
+        if let data = try? Data(contentsOf: fileURL),
+           let existingConfig = try? JSONDecoder().decode(WidgetConfigurationData.self, from: data) {
+            configuration = WidgetConfigurationData(
+                photos: existingConfig.photos,
+                selectedEventIds: existingConfig.selectedEventIds,
+                lastUpdated: Date(),
+                customTitle: title
+            )
+        } else {
+            configuration = WidgetConfigurationData(
+                photos: [],
+                selectedEventIds: [],
+                lastUpdated: Date(),
+                customTitle: title
+            )
+        }
+
+        // Save updated configuration
+        do {
+            let data = try JSONEncoder().encode(configuration)
+            try data.write(to: fileURL)
+            WidgetCenter.shared.reloadTimelines(ofKind: getWidgetKind(for: widgetType))
+        } catch {
+            print("❌ Failed to save widget title: \(error)")
+        }
+    }
+
+    func getWidgetTitle(for widgetType: WidgetType) -> String {
+        guard let containerURL = sharedContainerURL else { return widgetType.defaultTitle }
+
+        let fileURL = containerURL.appendingPathComponent(widgetType.fileName)
+
+        if let data = try? Data(contentsOf: fileURL),
+           let configuration = try? JSONDecoder().decode(WidgetConfigurationData.self, from: data),
+           let customTitle = configuration.customTitle {
+            return customTitle
+        }
+
+        return widgetType.defaultTitle
     }
 
     // MARK: - Helper Methods
@@ -149,27 +208,14 @@ class WidgetDataManager {
         return formatter.string(from: date)
     }
 
-    // Helper method to filter events based on widget type
-    private func filterEvents(_ events: [CalendarEvent], for widgetType: WidgetType) -> [CalendarEvent] {
-        switch widgetType {
-        case .allEvents:
-            return events
-        case .dateNights:
-            return events.filter { $0.title.lowercased().contains("date") || $0.title.lowercased().contains("dinner") || $0.title.lowercased().contains("restaurant") }
-        case .anniversaries:
-            return events.filter { $0.title.lowercased().contains("anniversary") || $0.title.lowercased().contains("birthday") }
-        case .travel:
-            return events.filter { $0.title.lowercased().contains("trip") || $0.title.lowercased().contains("vacation") || $0.title.lowercased().contains("travel") }
-        }
-    }
 
     // Helper method to get widget kind string
     private func getWidgetKind(for widgetType: WidgetType) -> String {
         switch widgetType {
-        case .allEvents: return "LovelyWidget"
-        case .dateNights: return "DateNightWidget"
-        case .anniversaries: return "AnniversaryWidget"
-        case .travel: return "TravelWidget"
+        case .widget1: return "LovelyWidget"
+        case .widget2: return "DateNightWidget"
+        case .widget3: return "AnniversaryWidget"
+        case .widget4: return "TravelWidget"
         }
     }
 }

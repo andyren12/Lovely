@@ -7,13 +7,22 @@ import UIKit
 // MARK: - Widget Types
 
 enum WidgetType: String, CaseIterable {
-    case allEvents = "all"
-    case dateNights = "date_nights"
-    case anniversaries = "anniversaries"
-    case travel = "travel"
+    case widget1 = "widget1"
+    case widget2 = "widget2"
+    case widget3 = "widget3"
+    case widget4 = "widget4"
 
     var fileName: String {
         return "widget_photos_\(rawValue).json"
+    }
+
+    var defaultTitle: String {
+        switch self {
+        case .widget1: return "Widget 1"
+        case .widget2: return "Widget 2"
+        case .widget3: return "Widget 3"
+        case .widget4: return "Widget 4"
+        }
     }
 }
 
@@ -31,6 +40,7 @@ struct WidgetConfigurationData: Codable {
     let photos: [WidgetPhotoConfigData]
     let selectedEventIds: [String]
     let lastUpdated: Date
+    let customTitle: String?
 }
 
 struct WidgetPhotoConfigData: Codable {
