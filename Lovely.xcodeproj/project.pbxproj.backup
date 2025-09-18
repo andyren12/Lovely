@@ -49,14 +49,17 @@
 		FB37BE722E7C881C005BEF13 /* WidgetsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE702E7C881C005BEF13 /* WidgetsView.swift */; };
 		FB37BE7A2E7C8C75005BEF13 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB37BE792E7C8C75005BEF13 /* WidgetKit.framework */; };
 		FB37BE7C2E7C8C75005BEF13 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB37BE7B2E7C8C75005BEF13 /* SwiftUI.framework */; };
+		FB37BE812E7C8C75005BEF13 /* LovelyWidgetLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE802E7C8C75005BEF13 /* LovelyWidgetLiveActivity.swift */; };
 		FB37BE852E7C8C75005BEF13 /* AppIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE842E7C8C75005BEF13 /* AppIntent.swift */; };
 		FB37BE872E7C8C76005BEF13 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FB37BE862E7C8C76005BEF13 /* Assets.xcassets */; };
 		FB37BE8B2E7C8C76005BEF13 /* LovelyWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FB37BE772E7C8C75005BEF13 /* LovelyWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		FB37BE922E7C8CD7005BEF13 /* WidgetDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE912E7C8CD7005BEF13 /* WidgetDataManager.swift */; };
-		FB37BEAD2E7C9377005BEF13 /* LovelyWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BEA72E7C90F5005BEF13 /* LovelyWidget.swift */; };
-		FB37BEAE2E7C937A005BEF13 /* WidgetModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BEAB2E7C9189005BEF13 /* WidgetModels.swift */; };
-		FB37BEAF2E7C937F005BEF13 /* LovelyWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BEA52E7C90F5005BEF13 /* LovelyWidgetBundle.swift */; };
-		FB37BEB12E7C9640005BEF13 /* WidgetModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BEAB2E7C9189005BEF13 /* WidgetModels.swift */; };
+		FB37BE972E7C8DDF005BEF13 /* WidgetModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE942E7C8DDF005BEF13 /* WidgetModels.swift */; };
+		FB37BE9C2E7C8DE6005BEF13 /* WidgetModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE942E7C8DDF005BEF13 /* WidgetModels.swift */; };
+		FB37BEA82E7C90F5005BEF13 /* LovelyWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BEA52E7C90F5005BEF13 /* LovelyWidgetBundle.swift */; };
+		FB37BEA92E7C90F5005BEF13 /* LovelyWidgetSimple.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BEA62E7C90F5005BEF13 /* LovelyWidgetSimple.swift */; };
+		FB37BEAA2E7C90F5005BEF13 /* LovelyWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BEA72E7C90F5005BEF13 /* LovelyWidget.swift */; };
+		FB37BEAC2E7C9189005BEF13 /* WidgetModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BEAB2E7C9189005BEF13 /* WidgetModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -141,12 +144,15 @@
 		FB37BE772E7C8C75005BEF13 /* LovelyWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LovelyWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB37BE792E7C8C75005BEF13 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		FB37BE7B2E7C8C75005BEF13 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		FB37BE802E7C8C75005BEF13 /* LovelyWidgetLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LovelyWidgetLiveActivity.swift; sourceTree = "<group>"; };
 		FB37BE842E7C8C75005BEF13 /* AppIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIntent.swift; sourceTree = "<group>"; };
 		FB37BE862E7C8C76005BEF13 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FB37BE882E7C8C76005BEF13 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FB37BE902E7C8CAD005BEF13 /* LovelyWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LovelyWidgetExtension.entitlements; sourceTree = "<group>"; };
 		FB37BE912E7C8CD7005BEF13 /* WidgetDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WidgetDataManager.swift; sourceTree = "<group>"; };
+		FB37BE942E7C8DDF005BEF13 /* WidgetModels.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WidgetModels.swift; sourceTree = "<group>"; };
 		FB37BEA52E7C90F5005BEF13 /* LovelyWidgetBundle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LovelyWidgetBundle.swift; sourceTree = "<group>"; };
+		FB37BEA62E7C90F5005BEF13 /* LovelyWidgetSimple.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LovelyWidgetSimple.swift; sourceTree = "<group>"; };
 		FB37BEA72E7C90F5005BEF13 /* LovelyWidget.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LovelyWidget.swift; sourceTree = "<group>"; };
 		FB37BEAB2E7C9189005BEF13 /* WidgetModels.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WidgetModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -217,6 +223,7 @@
 		FB082E082E753332003CF621 /* Lovely */ = {
 			isa = PBXGroup;
 			children = (
+				FB37BE942E7C8DDF005BEF13 /* WidgetModels.swift */,
 				FB37BE912E7C8CD7005BEF13 /* WidgetDataManager.swift */,
 				FB37BE6F2E7C881C005BEF13 /* CalendarBucketListView.swift */,
 				FB37BE702E7C881C005BEF13 /* WidgetsView.swift */,
@@ -296,6 +303,8 @@
 				FB37BEA72E7C90F5005BEF13 /* LovelyWidget.swift */,
 				FB37BEAB2E7C9189005BEF13 /* WidgetModels.swift */,
 				FB37BEA52E7C90F5005BEF13 /* LovelyWidgetBundle.swift */,
+				FB37BEA62E7C90F5005BEF13 /* LovelyWidgetSimple.swift */,
+				FB37BE802E7C8C75005BEF13 /* LovelyWidgetLiveActivity.swift */,
 				FB37BE842E7C8C75005BEF13 /* AppIntent.swift */,
 				FB37BE862E7C8C76005BEF13 /* Assets.xcassets */,
 				FB37BE882E7C8C76005BEF13 /* Info.plist */,
@@ -477,17 +486,21 @@
 			buildActionMask = 2147483647;
 			files = (
 				FB37BE622E7B87F2005BEF13 /* AnniversarySetupView.swift in Sources */,
-				FB37BEB12E7C9640005BEF13 /* WidgetModels.swift in Sources */,
+				FB37BE972E7C8DDF005BEF13 /* WidgetModels.swift in Sources */,
 				FB082E0C2E753332003CF621 /* ContentView.swift in Sources */,
 				FB37BE5E2E7B5EEF005BEF13 /* S3Manager.swift in Sources */,
+				FB37BEAC2E7C9189005BEF13 /* WidgetModels.swift in Sources */,
 				FB082E0A2E753332003CF621 /* LovelyApp.swift in Sources */,
 				FB082E542E775800003CF621 /* PhoneAuthView.swift in Sources */,
 				FB37BE532E776500005BEF13 /* BucketListView.swift in Sources */,
 				FB37BE552E776501005BEF13 /* CalendarView.swift in Sources */,
 				FB37BE572E776600005BEF13 /* BucketListManager.swift in Sources */,
 				FB37BE722E7C881C005BEF13 /* WidgetsView.swift in Sources */,
+				FB37BEAA2E7C90F5005BEF13 /* LovelyWidget.swift in Sources */,
 				FB37BE532E788EDF005BEF13 /* UserSession.swift in Sources */,
+				FB37BEA92E7C90F5005BEF13 /* LovelyWidgetSimple.swift in Sources */,
 				FB082E4D2E7550A8003CF621 /* PartnerInviteView.swift in Sources */,
+				FB37BEA82E7C90F5005BEF13 /* LovelyWidgetBundle.swift in Sources */,
 				FB37BE712E7C881C005BEF13 /* CalendarBucketListView.swift in Sources */,
 				FB37BE642E7B88C7005BEF13 /* PostView.swift in Sources */,
 				FB082E4F2E7550A8003CF621 /* UserProfileSetupView.swift in Sources */,
@@ -531,10 +544,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FB37BEAF2E7C937F005BEF13 /* LovelyWidgetBundle.swift in Sources */,
-				FB37BEAD2E7C9377005BEF13 /* LovelyWidget.swift in Sources */,
-				FB37BEAE2E7C937A005BEF13 /* WidgetModels.swift in Sources */,
 				FB37BE852E7C8C75005BEF13 /* AppIntent.swift in Sources */,
+				FB37BE812E7C8C75005BEF13 /* LovelyWidgetLiveActivity.swift in Sources */,
+				FB37BE9C2E7C8DE6005BEF13 /* WidgetModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -29,8 +29,8 @@ struct WidgetsView: View {
             .navigationTitle("Widgets")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Preview") {
-                        showingWidgetPreview = true
+                    Button("Configure") {
+                        configureWidget()
                     }
                     .disabled(selectedEvents.isEmpty)
                 }
@@ -147,6 +147,17 @@ struct WidgetsView: View {
             selectedEvents.insert(eventId)
         }
     }
+
+    private func configureWidget() {
+        let eventsToUse = availableEvents.filter { event in
+            selectedEvents.contains(event.id ?? "")
+        }
+
+        WidgetDataManager.shared.updateWidgetConfiguration(selectedEvents: eventsToUse)
+
+        // Show success feedback
+        showingWidgetPreview = true
+    }
 }
 
 struct EventSelectionRow: View {
@@ -215,66 +226,91 @@ struct WidgetPreviewView: View {
 
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Widget Preview")
-                            .font(.title2)
-                            .fontWeight(.bold)
+            VStack(spacing: 24) {
+                // Success Icon
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.green)
+                    .padding(.top, 40)
 
-                        Text("This is how your widget will look with the selected events:")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
+                VStack(spacing: 12) {
+                    Text("Widget Configured!")
+                        .font(.title)
+                        .fontWeight(.bold)
 
-                    // Mock widget preview
-                    VStack(spacing: 12) {
-                        ForEach(selectedEvents.prefix(4)) { event in
-                            HStack(spacing: 12) {
-                                Rectangle()
-                                    .fill(LinearGradient(
-                                        colors: [.purple.opacity(0.3), .purple.opacity(0.1)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ))
-                                    .frame(width: 60, height: 60)
-                                    .cornerRadius(8)
-                                    .overlay(
-                                        Image(systemName: "photo")
-                                            .foregroundColor(.purple)
-                                    )
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(event.title)
-                                        .font(.headline)
-                                        .lineLimit(1)
-
-                                    Text(event.date.formatted(date: .abbreviated, time: .omitted))
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-
-                                Spacer()
-                            }
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(12)
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    Text("Note: Widget functionality is coming soon! This preview shows how your selected events will be organized.")
-                        .font(.caption)
+                    Text("Your widget has been set up with \(selectedEvents.count) event\(selectedEvents.count == 1 ? "" : "s"). Photos will cycle every 20 minutes.")
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
-
-                    Spacer()
                 }
+
+                // Widget Instructions
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("How to add the widget:")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("1.")
+                                .fontWeight(.semibold)
+                            Text("Long press on your home screen")
+                        }
+
+                        HStack {
+                            Text("2.")
+                                .fontWeight(.semibold)
+                            Text("Tap the + button in the top left")
+                        }
+
+                        HStack {
+                            Text("3.")
+                                .fontWeight(.semibold)
+                            Text("Search for \"Lovely\" and select the widget")
+                        }
+
+                        HStack {
+                            Text("4.")
+                                .fontWeight(.semibold)
+                            Text("Choose \"Small\" size and tap \"Add Widget\"")
+                        }
+                    }
+                    .font(.subheadline)
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+                .padding(.horizontal)
+
+                // Selected Events List
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Selected Events:")
+                        .font(.headline)
+
+                    ForEach(selectedEvents.prefix(5)) { event in
+                        HStack {
+                            Image(systemName: "photo")
+                                .foregroundColor(.purple)
+                            Text(event.title)
+                                .font(.subheadline)
+                            Spacer()
+                        }
+                    }
+
+                    if selectedEvents.count > 5 {
+                        Text("+ \(selectedEvents.count - 5) more events")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+                .padding(.horizontal)
+
+                Spacer()
             }
-            .navigationTitle("Preview")
+            .navigationTitle("Widget Ready")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
