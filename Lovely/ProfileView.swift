@@ -38,6 +38,15 @@ struct ProfileView: View {
         return userSession.displayNamesHeader()
     }
 
+    private var filteredEvents: [CalendarEvent] {
+        let hideEventsWithoutPhotos = userSession.userSettings?.hideEventsWithoutPhotos ?? false
+
+        if hideEventsWithoutPhotos {
+            return calendarManager.events.filter { !$0.photoURLs.isEmpty }
+        } else {
+            return calendarManager.events
+        }
+    }
 
     private var eventsGridView: some View {
         ScrollView {
@@ -45,10 +54,31 @@ struct ProfileView: View {
                 coupleHeaderSection
                     .padding(.bottom, 16)
 
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 3), spacing: 2) {
-                    ForEach(calendarManager.events) { event in
-                        EventGridItem(event: event, eventImages: eventImages) {
-                            selectedEvent = event
+                if filteredEvents.isEmpty && !calendarManager.events.isEmpty {
+                    // Show message when events are hidden due to filter
+                    VStack(spacing: 16) {
+                        Image(systemName: "photo.stack")
+                            .font(.system(size: 48))
+                            .foregroundColor(.purple.opacity(0.6))
+
+                        Text("No events with photos")
+                            .font(.title3)
+                            .fontWeight(.medium)
+
+                        Text("Events without photos are hidden. Turn off this setting in Settings to see all events.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 60)
+                } else {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 3), spacing: 2) {
+                        ForEach(filteredEvents) { event in
+                            EventGridItem(event: event, eventImages: eventImages) {
+                                selectedEvent = event
+                            }
                         }
                     }
                 }
@@ -58,8 +88,8 @@ struct ProfileView: View {
             loadEvents()
         }
         .sheet(item: $selectedEvent) { event in
-            if let eventIndex = calendarManager.events.firstIndex(where: { $0.id == event.id }) {
-                PostView(event: calendarManager.events[eventIndex])
+            if let eventIndex = filteredEvents.firstIndex(where: { $0.id == event.id }) {
+                PostView(event: filteredEvents[eventIndex])
             } else {
                 PostView(event: event)
             }
@@ -118,9 +148,9 @@ struct ProfileView: View {
                 }
 
                 // Dates Stat
-                if !calendarManager.events.isEmpty {
+                if !filteredEvents.isEmpty {
                     VStack(spacing: 2) {
-                        Text("\(calendarManager.events.count)")
+                        Text("\(filteredEvents.count)")
                             .font(.title2)
                             .fontWeight(.bold)
 
@@ -145,7 +175,7 @@ struct ProfileView: View {
     }
 
     private func loadEventImages() async {
-        for event in calendarManager.events {
+        for event in filteredEvents {
             guard let eventId = event.id,
                   let firstPhotoKey = event.photoURLs.first,
                   eventImages[eventId] == nil else { continue }

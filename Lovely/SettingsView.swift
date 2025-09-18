@@ -8,6 +8,7 @@ struct SettingsView: View {
     @State private var showingDeleteAlert = false
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @State private var hideEventsWithoutPhotos = false
 
     var body: some View {
         NavigationView {
@@ -102,6 +103,13 @@ struct SettingsView: View {
                     }
                 }
 
+                Section("Preferences") {
+                    Toggle("Hide events without photos", isOn: $hideEventsWithoutPhotos)
+                        .onChange(of: hideEventsWithoutPhotos) {
+                            updateHideEventsWithoutPhotosSetting()
+                        }
+                }
+
                 Section("Actions") {
                     Button("Sign Out") {
                         signOut()
@@ -135,6 +143,26 @@ struct SettingsView: View {
                 Button("OK") { }
             } message: {
                 Text(alertMessage)
+            }
+        }
+        .onAppear {
+            loadUserSettings()
+        }
+    }
+
+    private func loadUserSettings() {
+        hideEventsWithoutPhotos = userSession.userSettings?.hideEventsWithoutPhotos ?? false
+    }
+
+    private func updateHideEventsWithoutPhotosSetting() {
+        Task {
+            do {
+                try await userManager.updateUserSettings(hideEventsWithoutPhotos: hideEventsWithoutPhotos)
+            } catch {
+                alertMessage = "Failed to update settings: \(error.localizedDescription)"
+                showAlert = true
+                // Revert the toggle on error
+                hideEventsWithoutPhotos = userSession.userSettings?.hideEventsWithoutPhotos ?? false
             }
         }
     }

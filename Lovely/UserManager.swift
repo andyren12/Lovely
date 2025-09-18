@@ -269,6 +269,29 @@ class UserManager: ObservableObject {
         }
     }
 
+    func updateUserSettings(hideEventsWithoutPhotos: Bool) async throws {
+        guard let userProfile = currentUserProfile else {
+            throw NSError(domain: "UserManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "No user profile found"])
+        }
+
+        isLoading = true
+
+        var updatedSettings = userProfile.settings ?? UserSettings()
+        updatedSettings.hideEventsWithoutPhotos = hideEventsWithoutPhotos
+        updatedSettings.updatedAt = Date()
+
+        // Update the user profile with new settings
+        try await db.collection("users").document(userProfile.userId).updateData([
+            "settings": try Firestore.Encoder().encode(updatedSettings)
+        ])
+
+        // Update local state
+        currentUserProfile?.settings = updatedSettings
+        UserSession.shared.updateUserProfile(currentUserProfile)
+
+        isLoading = false
+    }
+
     func clearUserData() {
         currentUserProfile = nil
         currentCouple = nil

@@ -24,6 +24,10 @@ class UserSession: ObservableObject {
         userProfile?.coupleId
     }
 
+    var userSettings: UserSettings? {
+        userProfile?.settings
+    }
+
     func updateUserProfile(_ profile: UserProfile?) {
         userProfile = profile
         // If we have user profile data, we're no longer loading

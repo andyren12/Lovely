@@ -9,6 +9,7 @@ struct UserProfile: Codable, Identifiable {
     var birthday: Date
     var phoneNumber: String?
     var coupleId: String?
+    var settings: UserSettings?
     var createdAt: Date
     var updatedAt: Date
 
@@ -19,6 +20,7 @@ struct UserProfile: Codable, Identifiable {
         self.birthday = birthday
         self.phoneNumber = phoneNumber
         self.coupleId = nil
+        self.settings = nil
         self.createdAt = Date()
         self.updatedAt = Date()
     }
@@ -185,11 +187,13 @@ struct InviteCode {
 
 struct UserSettings: Codable {
     var autoTextPartnerOnEventCreation: Bool
+    var hideEventsWithoutPhotos: Bool
     var createdAt: Date
     var updatedAt: Date
 
-    init(autoTextPartnerOnEventCreation: Bool = false) {
+    init(autoTextPartnerOnEventCreation: Bool = false, hideEventsWithoutPhotos: Bool = false) {
         self.autoTextPartnerOnEventCreation = autoTextPartnerOnEventCreation
+        self.hideEventsWithoutPhotos = hideEventsWithoutPhotos
         self.createdAt = Date()
         self.updatedAt = Date()
     }
