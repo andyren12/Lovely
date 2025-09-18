@@ -15,14 +15,28 @@ class SMSManager: NSObject, ObservableObject {
     }
 
     func canSendText() -> Bool {
-        return MFMessageComposeViewController.canSendText()
+        // Check if SMS URL scheme is available
+        guard let smsURL = URL(string: "sms:") else {
+            print("SMS URL scheme not available")
+            return false
+        }
+
+        let canOpenSMS = UIApplication.shared.canOpenURL(smsURL)
+        print("🔍 SMS Debug - Can open SMS URL: \(canOpenSMS)")
+
+        // Additional check for simulator
+        #if targetEnvironment(simulator)
+        print("SMS available in simulator via URL scheme")
+        return canOpenSMS
+        #else
+        return canOpenSMS
+        #endif
     }
 
     func sendEventNotification(to phoneNumber: String, event: CalendarEvent, senderName: String) {
-        guard canSendText() else {
-            print("Device cannot send text messages")
-            return
-        }
+        print("🔍 SMS Debug - Attempting to send SMS to: '\(phoneNumber)'")
+        print("🔍 SMS Debug - Event: '\(event.title)'")
+        print("🔍 SMS Debug - Sender: '\(senderName)'")
 
         let eventLink = DeepLinkManager.shared.createEventDeepLink(eventId: event.id ?? "")
         let dateFormatter = DateFormatter()
@@ -38,9 +52,47 @@ class SMSManager: NSObject, ObservableObject {
         Tap to view: \(eventLink)
         """
 
-        messageRecipients = [phoneNumber]
-        messageBody = message
-        isShowingMessageComposer = true
+        print("🔍 SMS Debug - Message content: \(message)")
+        print("🔍 SMS Debug - Deep link: \(eventLink)")
+
+        // Use URL scheme approach instead of MFMessageComposeViewController
+        sendSMSViaURL(to: phoneNumber, message: message)
+    }
+
+    private func sendSMSViaURL(to phoneNumber: String, message: String) {
+        // Clean phone number (remove any formatting)
+        let cleanedPhoneNumber = phoneNumber.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+
+        // URL encode the message
+        guard let encodedMessage = message.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
+            print("❌ Failed to encode SMS message")
+            return
+        }
+
+        // Create SMS URL
+        let smsURL = "sms:\(cleanedPhoneNumber)&body=\(encodedMessage)"
+
+        print("🔍 SMS URL: \(smsURL)")
+
+        guard let url = URL(string: smsURL) else {
+            print("❌ Invalid SMS URL")
+            return
+        }
+
+        // Open the SMS app
+        DispatchQueue.main.async {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url) { success in
+                    if success {
+                        print("✅ Successfully opened SMS app")
+                    } else {
+                        print("❌ Failed to open SMS app")
+                    }
+                }
+            } else {
+                print("❌ Cannot open SMS URL - SMS not available")
+            }
+        }
     }
 
     func sendEventNotificationPrompt(to phoneNumber: String, event: CalendarEvent, senderName: String, onComplete: @escaping () -> Void) {
@@ -74,54 +126,5 @@ class SMSManager: NSObject, ObservableObject {
     }
 }
 
-struct MessageComposeView: UIViewControllerRepresentable {
-    @Binding var isShowing: Bool
-    let recipients: [String]
-    let body: String
-    let onComplete: (() -> Void)?
+// MessageComposeView removed - now using URL scheme approach for SMS
 
-    init(isShowing: Binding<Bool>, recipients: [String], body: String, onComplete: (() -> Void)? = nil) {
-        self._isShowing = isShowing
-        self.recipients = recipients
-        self.body = body
-        self.onComplete = onComplete
-    }
-
-    func makeUIViewController(context: Context) -> MFMessageComposeViewController {
-        let composer = MFMessageComposeViewController()
-        composer.messageComposeDelegate = context.coordinator
-        composer.recipients = recipients
-        composer.body = body
-        return composer
-    }
-
-    func updateUIViewController(_ uiViewController: MFMessageComposeViewController, context: Context) {}
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-
-    class Coordinator: NSObject, MFMessageComposeViewControllerDelegate {
-        let parent: MessageComposeView
-
-        init(_ parent: MessageComposeView) {
-            self.parent = parent
-        }
-
-        func messageComposeViewController(_ controller: MFMessageComposeViewController, didFinishWith result: MessageComposeResult) {
-            switch result {
-            case .sent:
-                print("Message sent successfully")
-            case .cancelled:
-                print("Message cancelled")
-            case .failed:
-                print("Message failed to send")
-            @unknown default:
-                print("Unknown message result")
-            }
-
-            parent.isShowing = false
-            parent.onComplete?()
-        }
-    }
-}

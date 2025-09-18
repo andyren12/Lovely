@@ -52,7 +52,15 @@ class CalendarManager: ObservableObject {
             events.append(newEvent)
             events.sort { $0.date < $1.date }
         } catch {
-            errorMessage = "Failed to add event: \(error.localizedDescription)"
+            let errorMsg = "Failed to add event: \(error.localizedDescription)"
+            errorMessage = errorMsg
+            print("CalendarManager Error: \(errorMsg)")
+
+            // Log specific network errors
+            if error.localizedDescription.contains("Network connectivity") {
+                print("Network connectivity issue detected - event may be cached locally")
+            }
+
             throw error
         }
 

@@ -617,13 +617,6 @@ struct AddEventView: View {
                 }
             )
         }
-        .sheet(isPresented: $smsManager.isShowingMessageComposer) {
-            MessageComposeView(
-                isShowing: $smsManager.isShowingMessageComposer,
-                recipients: smsManager.messageRecipients,
-                body: smsManager.messageBody
-            )
-        }
     }
 
     // MARK: - Photo Functions
@@ -682,16 +675,35 @@ struct AddEventView: View {
             onAdd(event)
 
             // Send SMS if enabled and partner phone number is available
-            if shouldTextPartner,
-               let currentUser = UserSession.shared.userProfile,
-               let partnerProfile = UserSession.shared.partnerProfile,
-               let partnerPhone = partnerProfile.phoneNumber,
-               !partnerPhone.isEmpty {
+            if shouldTextPartner {
+                print("🔍 Event Creation Debug - SMS toggle is ON")
+                print("🔍 Event Creation Debug - Current user: \(UserSession.shared.userProfile?.fullName ?? "nil")")
+                print("🔍 Event Creation Debug - Partner profile: \(UserSession.shared.partnerProfile?.fullName ?? "nil")")
+                print("🔍 Event Creation Debug - Partner phone: '\(UserSession.shared.partnerProfile?.phoneNumber ?? "nil")'")
+
+                guard let currentUser = UserSession.shared.userProfile,
+                      let partnerProfile = UserSession.shared.partnerProfile,
+                      let partnerPhone = partnerProfile.phoneNumber,
+                      !partnerPhone.isEmpty else {
+                    print("❌ Event Creation Debug - Cannot send SMS: Missing user profile or partner phone number")
+                    // Still dismiss - don't block event creation
+                    return
+                }
+
+                guard smsManager.canSendText() else {
+                    print("❌ Event Creation Debug - Cannot send SMS: Device doesn't support SMS")
+                    // Still dismiss - don't block event creation
+                    return
+                }
+
+                print("✅ Event Creation Debug - All SMS prerequisites met, calling SMSManager")
                 smsManager.sendEventNotification(
                     to: partnerPhone,
                     event: event,
                     senderName: currentUser.firstName
                 )
+            } else {
+                print("🔍 Event Creation Debug - SMS toggle is OFF")
             }
 
             dismiss()
