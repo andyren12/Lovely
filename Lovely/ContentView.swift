@@ -8,14 +8,25 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var authManager = AuthManager()
+    @StateObject private var userManager = UserManager()
+    @StateObject private var deepLinkManager = DeepLinkManager.shared
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        Group {
+            if authManager.isAuthenticated {
+                if authManager.needsProfileSetup {
+                    UserProfileSetupView(authManager: authManager, userManager: userManager)
+                } else if authManager.isNewUser {
+                    PartnerInviteView(authManager: authManager, userManager: userManager)
+                } else {
+                    MainAppView(authManager: authManager, userManager: userManager)
+                }
+            } else {
+                AuthView()
+                    .environmentObject(authManager)
+            }
         }
-        .padding()
     }
 }
 

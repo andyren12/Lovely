@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Lovely needs access to your camera to capture photos for your events and memories.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Lovely needs access to your photo library to add photos to your events and memories.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Lovely needs access to your contacts to help you text your partner about events.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string></string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>app-1-1025956126845-ios-72541b6e670e9459845114</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.lovely.deeplink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>lovely</string>
+			</array>
+		</dict>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+</dict>
+</plist>
