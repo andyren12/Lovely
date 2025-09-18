@@ -14,23 +14,21 @@ struct ProfileView: View {
     @State private var selectedEvent: CalendarEvent?
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                if userSession.isInCouple {
-                    eventsGridView
-                } else {
-                    noCoupleSection
-                }
+        VStack(spacing: 0) {
+            if userSession.isInCouple {
+                eventsGridView
+            } else {
+                noCoupleSection
             }
-            .navigationBarHidden(true)
-            .sheet(isPresented: $showingSettings) {
-                SettingsView(authManager: authManager, userManager: userManager)
-            }
-            .alert("Error", isPresented: $showAlert) {
-                Button("OK") { }
-            } message: {
-                Text(alertMessage)
-            }
+        }
+        .navigationBarHidden(true)
+        .sheet(isPresented: $showingSettings) {
+            SettingsView(authManager: authManager, userManager: userManager)
+        }
+        .alert("Error", isPresented: $showAlert) {
+            Button("OK") { }
+        } message: {
+            Text(alertMessage)
         }
     }
 
@@ -404,34 +402,32 @@ struct CoupleProfilePictureView: View {
             )
         }
         .sheet(isPresented: $showingImagePicker) {
-            NavigationView {
-                PhotosPicker(
-                    selection: $selectedItems,
-                    maxSelectionCount: 1,
-                    matching: .images
-                ) {
-                    VStack(spacing: 16) {
-                        Image(systemName: "photo.on.rectangle")
-                            .font(.system(size: 50))
-                            .foregroundColor(.purple)
+            PhotosPicker(
+                selection: $selectedItems,
+                maxSelectionCount: 1,
+                matching: .images
+            ) {
+                VStack(spacing: 16) {
+                    Image(systemName: "photo.on.rectangle")
+                        .font(.system(size: 50))
+                        .foregroundColor(.purple)
 
-                        Text("Choose Couple Photo")
-                            .font(.headline)
+                    Text("Choose Couple Photo")
+                        .font(.headline)
 
-                        Text("Select a photo that represents your relationship")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    Text("Select a photo that represents your relationship")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
                 }
-                .navigationTitle("Profile Picture")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button("Cancel") {
-                            showingImagePicker = false
-                        }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .navigationTitle("Profile Picture")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        showingImagePicker = false
                     }
                 }
             }

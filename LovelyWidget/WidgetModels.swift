@@ -4,6 +4,19 @@ import UIKit
 // Widget-specific models that don't depend on Firebase
 // These mirror the main app models but are simplified for widget use
 
+// MARK: - Widget Types
+
+enum WidgetType: String, CaseIterable {
+    case allEvents = "all"
+    case dateNights = "date_nights"
+    case anniversaries = "anniversaries"
+    case travel = "travel"
+
+    var fileName: String {
+        return "widget_photos_\(rawValue).json"
+    }
+}
+
 struct WidgetCalendarEvent {
     let id: String
     let title: String

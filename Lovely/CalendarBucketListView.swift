@@ -10,11 +10,11 @@ struct CalendarBucketListView: View {
     @StateObject private var userSession = UserSession.shared
     @StateObject private var calendarManager = CalendarManager()
     @StateObject private var bucketListManager = BucketListManager()
-
+    
     enum ViewType: String, CaseIterable {
         case calendar = "Calendar"
         case bucketList = "Bucket List"
-
+        
         var iconName: String {
             switch self {
             case .calendar:
@@ -24,67 +24,65 @@ struct CalendarBucketListView: View {
             }
         }
     }
-
+    
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Dropdown Header with Plus Button
-                HStack {
-                    // Left spacer for balance
-                    Spacer()
-
-                    // Centered dropdown menu
-                    Menu {
-                        ForEach(ViewType.allCases, id: \.self) { viewType in
-                            Button {
-                                selectedView = viewType
-                            } label: {
-                                Label(viewType.rawValue, systemImage: viewType.iconName)
-                            }
+        VStack(spacing: 0) {
+            // Dropdown Header with Plus Button
+            HStack {
+                // Left spacer for balance
+                Spacer()
+                
+                // Centered dropdown menu
+                Menu {
+                    ForEach(ViewType.allCases, id: \.self) { viewType in
+                        Button {
+                            selectedView = viewType
+                        } label: {
+                            Label(viewType.rawValue, systemImage: viewType.iconName)
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: selectedView.iconName)
+                        Text(selectedView.rawValue)
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        Image(systemName: "chevron.down")
+                            .font(.caption)
+                    }
+                    .foregroundColor(.primary)
+                }
+                
+                // Right spacer and plus button
+                Spacer()
+                
+                if selectedView == .calendar || selectedView == .bucketList {
+                    Button {
+                        if selectedView == .calendar {
+                            showingAddEvent = true
+                        } else {
+                            showingAddBucketItem = true
                         }
                     } label: {
-                        HStack {
-                            Image(systemName: selectedView.iconName)
-                            Text(selectedView.rawValue)
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                            Image(systemName: "chevron.down")
-                                .font(.caption)
-                        }
-                        .foregroundColor(.primary)
-                    }
-
-                    // Right spacer and plus button
-                    Spacer()
-
-                    if selectedView == .calendar || selectedView == .bucketList {
-                        Button {
-                            if selectedView == .calendar {
-                                showingAddEvent = true
-                            } else {
-                                showingAddBucketItem = true
-                            }
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.title3)
-                        }
+                        Image(systemName: "plus")
+                            .font(.title3)
                     }
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 12)
-                .background(Color(.systemBackground))
-
-                Divider()
-
-                // Content View
-                Group {
-                    switch selectedView {
-                    case .calendar:
-                        CalendarContentView(authManager: authManager, userManager: userManager)
-                            .environmentObject(deepLinkManager)
-                    case .bucketList:
-                        BucketListContentView(authManager: authManager, userManager: userManager, bucketListManager: bucketListManager)
-                    }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+            .background(Color(.systemBackground))
+            
+            Divider()
+            
+            // Content View
+            Group {
+                switch selectedView {
+                case .calendar:
+                    CalendarContentView(authManager: authManager, userManager: userManager)
+                        .environmentObject(deepLinkManager)
+                case .bucketList:
+                    BucketListContentView(authManager: authManager, userManager: userManager, bucketListManager: bucketListManager)
                 }
             }
         }

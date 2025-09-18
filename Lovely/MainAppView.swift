@@ -29,57 +29,44 @@ struct MainAppView: View {
     @State private var selectedTab: AppTab = .calendar
 
     var body: some View {
-        VStack(spacing: 0) {
-            GeometryReader { proxy in
-                TabView(selection: $selectedTab) {
-                    // PAGE 1 — Widgets
-                    NavigationStack {
-                        WidgetsView(authManager: authManager, userManager: userManager)
-                            .onAppear { print("✅ WidgetsView appeared") }
-                    }
-                    .environmentObject(deepLinkManager)
-                    .frame(width: proxy.size.width, height: proxy.size.height)
-                    .tag(AppTab.widgets)
-
-                    // PAGE 2 — Calendar
-                    NavigationStack {
-                        CalendarBucketListView(authManager: authManager, userManager: userManager)
-                            .onAppear { print("✅ CalendarBucketListView appeared") }
-                    }
-                    .environmentObject(deepLinkManager)
-                    .frame(width: proxy.size.width, height: proxy.size.height)
-                    .tag(AppTab.calendar)
-
-                    // PAGE 3 — Profile
-                    NavigationStack {
-                        ProfileView(authManager: authManager, userManager: userManager)
-                            .onAppear { print("✅ ProfileView appeared") }
-                    }
-                    .environmentObject(deepLinkManager)
-                    .frame(width: proxy.size.width, height: proxy.size.height)
-                    .tag(AppTab.profile)
+        // ✅ Single parent NavigationStack so large titles/insets work
+        NavigationStack {
+            TabView(selection: $selectedTab) {
+                // ✅ Each page wrapped in PageContainer to guarantee real size
+                PageContainer {
+                    WidgetsView(authManager: authManager, userManager: userManager)
                 }
-                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never)) // native swipe
-                .animation(.easeOut(duration: 0.2), value: selectedTab)
-                .background(Color(.systemBackground))
-            }
+                .tag(AppTab.widgets)
 
-            // Floating “island” tab bar
-            CustomTabBar(selected: $selectedTab)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
-                .background(Color.clear)
-        }
-        .ignoresSafeArea(.keyboard)
-        .onChange(of: deepLinkManager.shouldNavigateToEvent) {
-            if deepLinkManager.shouldNavigateToEvent {
-                selectedTab = .calendar
+                PageContainer {
+                    CalendarBucketListView(authManager: authManager, userManager: userManager)
+                        .environmentObject(deepLinkManager)
+                }
+                .tag(AppTab.calendar)
+
+                PageContainer {
+                    ProfileView(authManager: authManager, userManager: userManager)
+                        .environmentObject(deepLinkManager) // keep if Profile needs it
+                }
+                .tag(AppTab.profile)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never)) // native swipe
+            .animation(.easeOut(duration: 0.2), value: selectedTab)
+            .background(Color(.systemBackground))
+
+            // Your floating island tab bar inserted below content
+            .safeAreaInset(edge: .bottom) {
+                CustomTabBar(selected: $selectedTab)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 8)
+                    .background(Color.clear)
             }
         }
-        .onAppear {
-            print("✅ MainAppView appeared (selectedTab=\(selectedTab))")
-            loadUserProfile()
+        .onChange(of: deepLinkManager.shouldNavigateToEvent) {
+            if deepLinkManager.shouldNavigateToEvent { selectedTab = .calendar }
         }
+        .onAppear { loadUserProfile() }
     }
 
     private func loadUserProfile() {
@@ -88,6 +75,15 @@ struct MainAppView: View {
             do { try await userManager.loadUserProfile(userId: user.uid) }
             catch { print("Failed to load user profile: \(error)") }
         }
+    }
+}
+
+private struct PageContainer<Content: View>: View {
+    @ViewBuilder var content: Content
+    var body: some View {
+        content
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .background(Color(.systemBackground)) // matches app background
     }
 }
 

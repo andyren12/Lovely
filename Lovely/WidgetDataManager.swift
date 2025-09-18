@@ -2,11 +2,25 @@ import Foundation
 import UIKit
 import WidgetKit
 
+// MARK: - Widget Data Structures
+
+struct WidgetConfigurationData: Codable {
+    let photos: [WidgetPhotoConfigData]
+    let selectedEventIds: [String]
+    let lastUpdated: Date
+}
+
+struct WidgetPhotoConfigData: Codable {
+    let imageBase64: String
+    let eventTitle: String
+    let eventDate: String
+    let eventId: String
+}
+
 class WidgetDataManager {
     static let shared = WidgetDataManager()
 
     private let sharedContainerURL: URL?
-    private let widgetConfigFile = "widget_photos.json"
 
     private init() {
         sharedContainerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.lovely.app")
@@ -14,17 +28,20 @@ class WidgetDataManager {
 
     // MARK: - Widget Configuration
 
-    func updateWidgetConfiguration(selectedEvents: [CalendarEvent]) {
+    func updateWidgetConfiguration(selectedEvents: [CalendarEvent], for widgetType: WidgetType = .allEvents) {
         guard let containerURL = sharedContainerURL else {
             print("❌ Failed to get shared container URL")
             return
         }
 
-        Task {
+        Task { @MainActor in
             var widgetPhotos: [WidgetPhotoConfigData] = []
 
-            // Process each selected event
-            for event in selectedEvents {
+            // Filter events based on widget type
+            let filteredEvents = filterEvents(selectedEvents, for: widgetType)
+
+            // Process each filtered event
+            for event in filteredEvents {
                 // Only include events with photos
                 guard !event.photoURLs.isEmpty else { continue }
 
@@ -59,29 +76,41 @@ class WidgetDataManager {
             // Save configuration to shared container
             do {
                 let data = try JSONEncoder().encode(configuration)
-                let fileURL = containerURL.appendingPathComponent(widgetConfigFile)
+                let fileURL = containerURL.appendingPathComponent(widgetType.fileName)
                 try data.write(to: fileURL)
 
-                // Tell WidgetKit to reload the widget
-                WidgetCenter.shared.reloadTimelines(ofKind: "LovelyWidget")
+                // Tell WidgetKit to reload the specific widget
+                WidgetCenter.shared.reloadTimelines(ofKind: getWidgetKind(for: widgetType))
 
-                print("✅ Widget configuration updated with \(widgetPhotos.count) photos")
+                print("✅ \(widgetType.displayName) widget configuration updated with \(widgetPhotos.count) photos")
             } catch {
-                print("❌ Failed to save widget configuration: \(error)")
+                print("❌ Failed to save \(widgetType.displayName) widget configuration: \(error)")
             }
         }
     }
 
-    func clearWidgetConfiguration() {
+    func clearWidgetConfiguration(for widgetType: WidgetType = .allEvents) {
         guard let containerURL = sharedContainerURL else { return }
 
-        let fileURL = containerURL.appendingPathComponent(widgetConfigFile)
+        let fileURL = containerURL.appendingPathComponent(widgetType.fileName)
         try? FileManager.default.removeItem(at: fileURL)
 
         // Reload widget to show empty state
-        WidgetCenter.shared.reloadTimelines(ofKind: "LovelyWidget")
+        WidgetCenter.shared.reloadTimelines(ofKind: getWidgetKind(for: widgetType))
 
-        print("✅ Widget configuration cleared")
+        print("✅ \(widgetType.displayName) widget configuration cleared")
+    }
+
+    func clearAllWidgetConfigurations() {
+        for widgetType in WidgetType.allCases {
+            clearWidgetConfiguration(for: widgetType)
+        }
+    }
+
+    func updateAllWidgetTypes(with selectedEvents: [CalendarEvent]) {
+        for widgetType in WidgetType.allCases {
+            updateWidgetConfiguration(selectedEvents: selectedEvents, for: widgetType)
+        }
     }
 
     // MARK: - Helper Methods
@@ -119,6 +148,28 @@ class WidgetDataManager {
         formatter.timeStyle = .none
         return formatter.string(from: date)
     }
-}
 
-// Note: WidgetConfigurationData and WidgetPhotoConfigData are defined in WidgetModels.swift
+    // Helper method to filter events based on widget type
+    private func filterEvents(_ events: [CalendarEvent], for widgetType: WidgetType) -> [CalendarEvent] {
+        switch widgetType {
+        case .allEvents:
+            return events
+        case .dateNights:
+            return events.filter { $0.title.lowercased().contains("date") || $0.title.lowercased().contains("dinner") || $0.title.lowercased().contains("restaurant") }
+        case .anniversaries:
+            return events.filter { $0.title.lowercased().contains("anniversary") || $0.title.lowercased().contains("birthday") }
+        case .travel:
+            return events.filter { $0.title.lowercased().contains("trip") || $0.title.lowercased().contains("vacation") || $0.title.lowercased().contains("travel") }
+        }
+    }
+
+    // Helper method to get widget kind string
+    private func getWidgetKind(for widgetType: WidgetType) -> String {
+        switch widgetType {
+        case .allEvents: return "LovelyWidget"
+        case .dateNights: return "DateNightWidget"
+        case .anniversaries: return "AnniversaryWidget"
+        case .travel: return "TravelWidget"
+        }
+    }
+}

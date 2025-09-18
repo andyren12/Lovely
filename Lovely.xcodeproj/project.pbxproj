@@ -56,7 +56,6 @@
 		FB37BEAD2E7C9377005BEF13 /* LovelyWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BEA72E7C90F5005BEF13 /* LovelyWidget.swift */; };
 		FB37BEAE2E7C937A005BEF13 /* WidgetModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BEAB2E7C9189005BEF13 /* WidgetModels.swift */; };
 		FB37BEAF2E7C937F005BEF13 /* LovelyWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BEA52E7C90F5005BEF13 /* LovelyWidgetBundle.swift */; };
-		FB37BEB12E7C9640005BEF13 /* WidgetModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BEAB2E7C9189005BEF13 /* WidgetModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -477,7 +476,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				FB37BE622E7B87F2005BEF13 /* AnniversarySetupView.swift in Sources */,
-				FB37BEB12E7C9640005BEF13 /* WidgetModels.swift in Sources */,
 				FB082E0C2E753332003CF621 /* ContentView.swift in Sources */,
 				FB37BE5E2E7B5EEF005BEF13 /* S3Manager.swift in Sources */,
 				FB082E0A2E753332003CF621 /* LovelyApp.swift in Sources */,

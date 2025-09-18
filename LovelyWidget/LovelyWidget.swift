@@ -2,12 +2,14 @@ import WidgetKit
 import SwiftUI
 import UIKit
 
+// MARK: - Widget Definitions
+
 @available(iOS 14.0, *)
 struct LovelyWidget: Widget {
     let kind: String = "LovelyWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: PhotoTimelineProvider()) { entry in
+        StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.allEvents)) { entry in
             if #available(iOS 17.0, *) {
                 LovelyWidgetEntryView(entry: entry)
                     .containerBackground(.fill.tertiary, for: .widget)
@@ -17,8 +19,71 @@ struct LovelyWidget: Widget {
                     .background()
             }
         }
-        .configurationDisplayName("Lovely Memories")
-        .description("Cycles through photos from your selected events every 20 minutes")
+        .configurationDisplayName("All Events")
+        .description("Cycles through photos from all your events")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
+@available(iOS 14.0, *)
+struct DateNightWidget: Widget {
+    let kind: String = "DateNightWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.dateNights)) { entry in
+            if #available(iOS 17.0, *) {
+                LovelyWidgetEntryView(entry: entry)
+                    .containerBackground(.purple.tertiary, for: .widget)
+            } else {
+                LovelyWidgetEntryView(entry: entry)
+                    .padding()
+                    .background(Color.purple.opacity(0.1))
+            }
+        }
+        .configurationDisplayName("Date Nights")
+        .description("Shows photos from your romantic date nights")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
+@available(iOS 14.0, *)
+struct AnniversaryWidget: Widget {
+    let kind: String = "AnniversaryWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.anniversaries)) { entry in
+            if #available(iOS 17.0, *) {
+                LovelyWidgetEntryView(entry: entry)
+                    .containerBackground(.pink.tertiary, for: .widget)
+            } else {
+                LovelyWidgetEntryView(entry: entry)
+                    .padding()
+                    .background(Color.pink.opacity(0.1))
+            }
+        }
+        .configurationDisplayName("Anniversaries")
+        .description("Celebrates your special anniversary moments")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
+@available(iOS 14.0, *)
+struct TravelWidget: Widget {
+    let kind: String = "TravelWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.travel)) { entry in
+            if #available(iOS 17.0, *) {
+                LovelyWidgetEntryView(entry: entry)
+                    .containerBackground(.blue.tertiary, for: .widget)
+            } else {
+                LovelyWidgetEntryView(entry: entry)
+                    .padding()
+                    .background(Color.blue.opacity(0.1))
+            }
+        }
+        .configurationDisplayName("Travel Adventures")
+        .description("Relive your travel memories together")
         .supportedFamilies([.systemSmall])
     }
 }
@@ -30,9 +95,14 @@ struct PhotoTimelineEntry: TimelineEntry {
     let eventDate: String
 }
 
+
 struct PhotoTimelineProvider: TimelineProvider {
-    // (Optional but nice): be explicit
+    let widgetType: WidgetType
     typealias Entry = PhotoTimelineEntry
+
+    init(widgetType: WidgetType = WidgetType.allEvents) {
+        self.widgetType = widgetType
+    }
 
     func placeholder(in context: Context) -> PhotoTimelineEntry {
         PhotoTimelineEntry(
@@ -57,8 +127,8 @@ struct PhotoTimelineProvider: TimelineProvider {
         var entries: [PhotoTimelineEntry] = []
         let currentDate = Date()
 
-        // Load widget configuration
-        let widgetData = loadWidgetData()
+        // Load widget configuration for specific widget type
+        let widgetData = loadWidgetData(for: widgetType)
 
         if widgetData.photos.isEmpty {
             // No photos configured - show placeholder
@@ -153,10 +223,9 @@ struct LovelyWidgetEntryView: View {
 
 // MARK: - Widget Data Management
 
-// Fix 3: change return type to the renamed model (see file #2)
-func loadWidgetData() -> LovelyWidgetConfig {
+func loadWidgetData(for widgetType: WidgetType = WidgetType.allEvents) -> LovelyWidgetConfig {
     guard let sharedContainer = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.lovely.app"),
-          let data = try? Data(contentsOf: sharedContainer.appendingPathComponent("widget_photos.json")),
+          let data = try? Data(contentsOf: sharedContainer.appendingPathComponent(widgetType.fileName)),
           let configuration = try? JSONDecoder().decode(WidgetConfigurationData.self, from: data) else {
         return LovelyWidgetConfig(photos: [], selectedEventIds: [])
     }
