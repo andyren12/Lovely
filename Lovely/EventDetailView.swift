@@ -48,7 +48,7 @@ struct EventDetailView: View {
                             .frame(width: 64, height: 64)
                             .background(
                                 LinearGradient(
-                                    colors: [.pink, .red],
+                                    colors: [.purple, .purple.opacity(0.6)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
@@ -111,7 +111,7 @@ struct EventDetailView: View {
             // Date
             HStack {
                 Image(systemName: "calendar")
-                    .foregroundColor(.pink)
+                    .foregroundColor(.purple)
                     .frame(width: 20)
 
                 Text(event.date.formatted(date: .complete, time: event.isAllDay ? .omitted : .shortened))
@@ -124,7 +124,7 @@ struct EventDetailView: View {
             if !event.description.isEmpty {
                 HStack(alignment: .top) {
                     Image(systemName: "text.alignleft")
-                        .foregroundColor(.pink)
+                        .foregroundColor(.purple)
                         .frame(width: 20)
 
                     if isEditing {
@@ -147,7 +147,7 @@ struct EventDetailView: View {
             if let bucketListItem = selectedBucketListItem {
                 HStack(alignment: .top) {
                     Image(systemName: "list.clipboard")
-                        .foregroundColor(.pink)
+                        .foregroundColor(.purple)
                         .frame(width: 20)
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -186,7 +186,7 @@ struct EventDetailView: View {
             } else if isEditing {
                 HStack {
                     Image(systemName: "list.clipboard")
-                        .foregroundColor(.pink)
+                        .foregroundColor(.purple)
                         .frame(width: 20)
                     Button("Link Bucket List Item") {
                         showingBucketListPicker = true
@@ -253,7 +253,7 @@ struct EventDetailView: View {
                             Text("Add from Photos")
                                 .font(.caption)
                         }
-                        .foregroundColor(.pink)
+                        .foregroundColor(.purple)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(Color(.systemGray5))
@@ -308,18 +308,18 @@ struct EventDetailView: View {
                             VStack(spacing: 8) {
                                 Image(systemName: "plus")
                                     .font(.title)
-                                    .foregroundColor(.pink)
+                                    .foregroundColor(.purple)
 
                                 Image(systemName: "photo")
                                     .font(.caption)
-                                    .foregroundColor(.pink)
+                                    .foregroundColor(.purple)
                             }
                             .frame(width: 100, height: 100)
                             .background(Color(.systemGray5))
                             .cornerRadius(8)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.pink.opacity(0.3), lineWidth: 1)
+                                    .stroke(Color.purple.opacity(0.3), lineWidth: 1)
                             )
                         }
                     }
@@ -338,7 +338,7 @@ struct EventDetailView: View {
                             .scaleEffect(0.8)
                         Text("Uploading...")
                             .font(.caption)
-                            .foregroundColor(.pink)
+                            .foregroundColor(.purple)
                     }
                 }
             }

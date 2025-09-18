@@ -22,7 +22,7 @@ struct AnniversarySetupView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "heart.circle.fill")
                         .font(.system(size: 80))
-                        .foregroundColor(.pink)
+                        .foregroundColor(.purple)
 
                     Text("Set Your Anniversary")
                         .font(.largeTitle)
@@ -55,7 +55,7 @@ struct AnniversarySetupView: View {
                     VStack(spacing: 8) {
                         HStack {
                             Image(systemName: "info.circle")
-                                .foregroundColor(.blue)
+                                .foregroundColor(.purple)
                             Text("This date cannot be changed later")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -63,14 +63,14 @@ struct AnniversarySetupView: View {
 
                         HStack {
                             Image(systemName: "lock.circle")
-                                .foregroundColor(.blue)
+                                .foregroundColor(.purple)
                             Text("Both partners will see this date")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
                     }
                     .padding()
-                    .background(Color.blue.opacity(0.1))
+                    .background(Color.purple.opacity(0.1))
                     .cornerRadius(8)
                 }
 

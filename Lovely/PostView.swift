@@ -215,7 +215,7 @@ struct PostView: View {
                 }) {
                     Image(systemName: showingComments ? "bubble.left.fill" : "bubble.left")
                         .font(.title3)
-                        .foregroundColor(.pink)
+                        .foregroundColor(.purple)
                 }
             }
         }
@@ -262,7 +262,7 @@ struct PostView: View {
                          isAddingComment ||
                          event.comments.count >= maxComments)
                 .foregroundColor(newComment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                               event.comments.count >= maxComments ? .secondary : .pink)
+                               event.comments.count >= maxComments ? .secondary : .purple)
             }
             .padding()
             .background(Color(.systemBackground))

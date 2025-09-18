@@ -241,7 +241,7 @@ struct EventGridItem: View {
                     // No photo placeholder
                     Rectangle()
                         .fill(LinearGradient(
-                            colors: [.pink.opacity(0.3), .purple.opacity(0.3)],
+                            colors: [.purple.opacity(0.4), .purple.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ))
@@ -307,12 +307,12 @@ struct CoupleProfilePictureView: View {
                         .clipShape(Circle())
                         .overlay(
                             Circle()
-                                .stroke(Color.pink.opacity(0.3), lineWidth: 3)
+                                .stroke(Color.purple.opacity(0.3), lineWidth: 3)
                         )
                 } else {
                     Circle()
                         .fill(LinearGradient(
-                            colors: [.pink.opacity(0.3), .purple.opacity(0.3)],
+                            colors: [.purple.opacity(0.4), .purple.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ))
@@ -324,7 +324,7 @@ struct CoupleProfilePictureView: View {
                         )
                         .overlay(
                             Circle()
-                                .stroke(Color.pink.opacity(0.3), lineWidth: 3)
+                                .stroke(Color.purple.opacity(0.3), lineWidth: 3)
                         )
                 }
 
@@ -348,7 +348,7 @@ struct CoupleProfilePictureView: View {
                             .font(.caption)
                             .foregroundColor(.white)
                             .padding(6)
-                            .background(Color.pink)
+                            .background(Color.purple)
                             .clipShape(Circle())
                     }
                 }
@@ -376,7 +376,7 @@ struct CoupleProfilePictureView: View {
                     VStack(spacing: 16) {
                         Image(systemName: "photo.on.rectangle")
                             .font(.system(size: 50))
-                            .foregroundColor(.pink)
+                            .foregroundColor(.purple)
 
                         Text("Choose Couple Photo")
                             .font(.headline)

@@ -109,7 +109,7 @@ struct PhoneAuthView: View {
                     }) {
                         Text("Use Different Number")
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(.purple)
                     .disabled(isLoading)
                 }
 

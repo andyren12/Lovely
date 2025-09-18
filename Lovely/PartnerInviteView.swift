@@ -22,7 +22,7 @@ struct PartnerInviteView: View {
                     VStack(spacing: 16) {
                         Image(systemName: "heart.circle.fill")
                             .font(.system(size: 80))
-                            .foregroundColor(.pink)
+                            .foregroundColor(.purple)
 
                         Text("Connect with your partner")
                             .font(.largeTitle)
@@ -75,10 +75,10 @@ struct PartnerInviteView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.blue.opacity(0.1))
+                .background(Color.purple.opacity(0.1))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.blue, lineWidth: 2)
+                        .stroke(Color.purple, lineWidth: 2)
                 )
                 .cornerRadius(12)
             }
@@ -107,10 +107,10 @@ struct PartnerInviteView: View {
                     .disabled(inviteCode.isEmpty || isLoading)
                 }
                 .padding()
-                .background(Color.pink.opacity(0.1))
+                .background(Color.purple.opacity(0.15))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.pink, lineWidth: 2)
+                        .stroke(Color.purple, lineWidth: 2)
                 )
                 .cornerRadius(12)
             }

@@ -35,7 +35,7 @@ struct MainAppView: View {
                 selectedTab = 1 // Switch to Calendar tab
             }
         }
-        .accentColor(.pink)
+        .accentColor(.purple)
         .onAppear {
             loadUserProfile()
         }

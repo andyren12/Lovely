@@ -11,7 +11,7 @@ struct UserSetupView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "person.circle.fill")
                         .font(.system(size: 80))
-                        .foregroundColor(.pink)
+                        .foregroundColor(.purple)
 
                     Text("Welcome to Lovely!")
                         .font(.largeTitle)

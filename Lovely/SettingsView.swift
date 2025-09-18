@@ -106,7 +106,7 @@ struct SettingsView: View {
                     Button("Sign Out") {
                         signOut()
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(.purple)
 
                     Button("Delete Account") {
                         showingDeleteAlert = true

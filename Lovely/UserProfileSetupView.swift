@@ -21,7 +21,7 @@ struct UserProfileSetupView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "person.circle.fill")
                         .font(.system(size: 80))
-                        .foregroundColor(.pink)
+                        .foregroundColor(.purple)
 
                     Text("Tell us about yourself")
                         .font(.largeTitle)

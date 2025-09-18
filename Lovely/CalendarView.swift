@@ -388,7 +388,7 @@ struct CalendarDayView: View {
 
                 if hasEvents {
                     Circle()
-                        .fill(isSelected ? Color.white : Color.blue)
+                        .fill(isSelected ? Color.white : Color.purple.opacity(0.3))
                         .frame(width: 4, height: 4)
                 } else {
                     Circle()
@@ -399,7 +399,7 @@ struct CalendarDayView: View {
             .frame(width: 32, height: 40)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.blue : Color.clear)
+                    .fill(isSelected ? Color.purple : Color.clear)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -412,7 +412,7 @@ struct EventRow: View {
     var body: some View {
         HStack(spacing: 12) {
             RoundedRectangle(cornerRadius: 2)
-                .fill(Color.blue)
+                .fill(Color.purple.opacity(0.7))
                 .frame(width: 4)
 
             VStack(alignment: .leading, spacing: 4) {
@@ -427,10 +427,10 @@ struct EventRow: View {
                         HStack(spacing: 4) {
                             Image(systemName: "photo")
                                 .font(.caption)
-                                .foregroundColor(.pink)
+                                .foregroundColor(.purple)
                             Text("\(event.photoURLs.count)")
                                 .font(.caption)
-                                .foregroundColor(.pink)
+                                .foregroundColor(.purple)
                         }
                     }
                 }
@@ -556,7 +556,7 @@ struct AddEventView: View {
                             showingBucketListPicker = true
                         }) {
                             Label("Link Bucket List Item", systemImage: "list.clipboard")
-                                .foregroundColor(.blue)
+                                .foregroundColor(.purple)
                         }
                     }
                 }
@@ -584,7 +584,7 @@ struct AddEventView: View {
                                 photoLibrary: .shared()
                             ) {
                                 Label("Add from Photos", systemImage: "plus")
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.purple)
                             }
 
                             Text("Add photos to capture memories for this event")
@@ -610,7 +610,7 @@ struct AddEventView: View {
                                     ) {
                                         Text("Add More")
                                             .font(.caption)
-                                            .foregroundColor(.blue)
+                                            .foregroundColor(.purple)
                                     }
                                 }
                             }

@@ -141,7 +141,7 @@ struct BucketListPickerItemRow: View {
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.title2)
-                        .foregroundColor(.pink)
+                        .foregroundColor(.purple)
                 }
             }
             .padding(.vertical, 4)
