@@ -1,55 +1,148 @@
 import SwiftUI
+import UIKit
+
+private enum AppTab: Int, CaseIterable {
+    case widgets = 0, calendar = 1, profile = 2
+
+    var title: String {
+        switch self {
+        case .widgets:  return "Widgets"
+        case .calendar: return "Calendar"
+        case .profile:  return "Profile"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .widgets:  return "rectangle.3.group"
+        case .calendar: return "calendar"
+        case .profile:  return "person.circle"
+        }
+    }
+}
 
 struct MainAppView: View {
     @ObservedObject var authManager: AuthManager
     @ObservedObject var userManager: UserManager
     @EnvironmentObject var deepLinkManager: DeepLinkManager
-    @State private var selectedTab = 1
+
+    @State private var selectedTab: AppTab = .calendar
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            WidgetsView(authManager: authManager, userManager: userManager)
-                .tabItem {
-                    Image(systemName: "rectangle.3.group")
-                    Text("Widgets")
-                }
-                .tag(0)
+        VStack(spacing: 0) {
+            GeometryReader { proxy in
+                TabView(selection: $selectedTab) {
+                    // PAGE 1 — Widgets
+                    NavigationStack {
+                        WidgetsView(authManager: authManager, userManager: userManager)
+                            .onAppear { print("✅ WidgetsView appeared") }
+                    }
+                    .environmentObject(deepLinkManager)
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .tag(AppTab.widgets)
 
-            CalendarBucketListView(authManager: authManager, userManager: userManager)
-                .environmentObject(deepLinkManager)
-                .tabItem {
-                    Image(systemName: "calendar")
-                    Text("Calendar")
-                }
-                .tag(1)
+                    // PAGE 2 — Calendar
+                    NavigationStack {
+                        CalendarBucketListView(authManager: authManager, userManager: userManager)
+                            .onAppear { print("✅ CalendarBucketListView appeared") }
+                    }
+                    .environmentObject(deepLinkManager)
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .tag(AppTab.calendar)
 
-            ProfileView(authManager: authManager, userManager: userManager)
-                .tabItem {
-                    Image(systemName: "person.circle")
-                    Text("Profile")
+                    // PAGE 3 — Profile
+                    NavigationStack {
+                        ProfileView(authManager: authManager, userManager: userManager)
+                            .onAppear { print("✅ ProfileView appeared") }
+                    }
+                    .environmentObject(deepLinkManager)
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .tag(AppTab.profile)
                 }
-                .tag(2)
+                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never)) // native swipe
+                .animation(.easeOut(duration: 0.2), value: selectedTab)
+                .background(Color(.systemBackground))
+            }
+
+            // Floating “island” tab bar
+            CustomTabBar(selected: $selectedTab)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+                .background(Color.clear)
         }
+        .ignoresSafeArea(.keyboard)
         .onChange(of: deepLinkManager.shouldNavigateToEvent) {
             if deepLinkManager.shouldNavigateToEvent {
-                selectedTab = 1 // Switch to Calendar tab
+                selectedTab = .calendar
             }
         }
-        .accentColor(.purple)
         .onAppear {
+            print("✅ MainAppView appeared (selectedTab=\(selectedTab))")
             loadUserProfile()
         }
     }
 
     private func loadUserProfile() {
         guard let user = authManager.user else { return }
-
         Task {
-            do {
-                try await userManager.loadUserProfile(userId: user.uid)
-            } catch {
-                print("Failed to load user profile: \(error)")
+            do { try await userManager.loadUserProfile(userId: user.uid) }
+            catch { print("Failed to load user profile: \(error)") }
+        }
+    }
+}
+
+private struct CustomTabBar: View {
+    @Binding var selected: AppTab
+
+    private let barHeight: CGFloat = 48
+
+    var body: some View {
+        ZStack {
+            // ISLAND BACKGROUND
+            if #available(iOS 15, *) {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
+                    )
+            } else {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(.systemBackground).opacity(0.92))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.black.opacity(0.06), lineWidth: 0.5)
+                    )
+            }
+
+            // BUTTONS (tight internal vertical spacing)
+            HStack(spacing: 0) {
+                ForEach(AppTab.allCases, id: \.rawValue) { tab in
+                    Button {
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
+                            selected = tab
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        }
+                    } label: {
+                        VStack(spacing: 2) {  // tighter label stack spacing
+                            Image(systemName: tab.systemImage)
+                                .font(.system(size: 17, weight: .semibold)) // slightly smaller icon
+                                .symbolVariant(selected == tab ? .fill : .none)
+                            Text(tab.title)
+                                .font(.caption2)
+                                .fontWeight(selected == tab ? .semibold : .regular)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .foregroundStyle(selected == tab ? Color.purple : Color.secondary)
+                    }
+                    .contentShape(Rectangle())
+                }
             }
         }
+        .frame(height: barHeight) // ⬅︎ controls overall island height
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: Color.black.opacity(0.10), radius: 12, y: 4)
+        .accessibilityElement(children: .contain)
     }
 }

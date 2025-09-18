@@ -94,15 +94,22 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
 struct LovelyApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
 
+    // Create single shared instances for the whole app
+    @StateObject private var authManager = AuthManager()
+    @StateObject private var userManager = UserManager()
+    @StateObject private var deepLinkManager = DeepLinkManager.shared
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(authManager)
+                .environmentObject(userManager)
+                .environmentObject(deepLinkManager)
                 .onOpenURL { url in
                     print("🔗 App - Received URL via onOpenURL: \(url.absoluteString)")
                     let handled = DeepLinkManager.shared.handleDeepLink(url)
                     print("🔗 App - Deep link handled: \(handled)")
                 }
         }
-        
     }
 }

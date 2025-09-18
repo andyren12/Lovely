@@ -1,16 +1,10 @@
-//
-//  ContentView.swift
-//  Lovely
-//
-//  Created by Andy Ren on 9/12/25.
-//
-
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var authManager = AuthManager()
-    @StateObject private var userManager = UserManager()
-    @StateObject private var deepLinkManager = DeepLinkManager.shared
+    // Pull managers from the environment (provided by LovelyApp)
+    @EnvironmentObject private var authManager: AuthManager
+    @EnvironmentObject private var userManager: UserManager
+    @EnvironmentObject private var deepLinkManager: DeepLinkManager
 
     var body: some View {
         Group {
@@ -26,14 +20,25 @@ struct ContentView: View {
                         .environmentObject(deepLinkManager)
                 }
             } else {
+                // If not authenticated, show AuthView; it will read managers from env
                 AuthView()
+                    // If AuthView expects env objects, they’re already injected from LovelyApp.
+                    // Keep these two lines only if AuthView explicitly requires them:
                     .environmentObject(authManager)
                     .environmentObject(deepLinkManager)
             }
+        }
+        // Helpful during debugging: see which branch you’re in
+        .onAppear {
+            print("✅ ContentView appeared. isAuthenticated=\(authManager.isAuthenticated), needsProfileSetup=\(authManager.needsProfileSetup), isNewUser=\(authManager.isNewUser)")
         }
     }
 }
 
 #Preview {
+    // Preview needs mock environment objects or it will crash
     ContentView()
+        .environmentObject(AuthManager())
+        .environmentObject(UserManager())
+        .environmentObject(DeepLinkManager.shared)
 }
