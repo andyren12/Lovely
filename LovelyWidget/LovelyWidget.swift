@@ -2,6 +2,18 @@ import WidgetKit
 import SwiftUI
 import UIKit
 
+// MARK: - Helper Functions
+
+func getCustomTitle(for widgetType: WidgetType) -> String {
+    guard let sharedContainer = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.lovely.app"),
+          let data = try? Data(contentsOf: sharedContainer.appendingPathComponent(widgetType.fileName)),
+          let configuration = try? JSONDecoder().decode(WidgetConfigurationData.self, from: data),
+          let customTitle = configuration.customTitle else {
+        return widgetType.defaultTitle
+    }
+    return customTitle
+}
+
 // MARK: - Widget Definitions
 
 @available(iOS 14.0, *)
@@ -9,7 +21,7 @@ struct LovelyWidget: Widget {
     let kind: String = "LovelyWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.allEvents)) { entry in
+        StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.widget1)) { entry in
             if #available(iOS 17.0, *) {
                 LovelyWidgetEntryView(entry: entry)
                     .containerBackground(.fill.tertiary, for: .widget)
@@ -19,8 +31,8 @@ struct LovelyWidget: Widget {
                     .background()
             }
         }
-        .configurationDisplayName("All Events")
-        .description("Cycles through photos from all your events")
+        .configurationDisplayName("Widget 1")
+        .description("Configure this widget in the Lovely app")
         .supportedFamilies([.systemSmall])
     }
 }
@@ -30,7 +42,7 @@ struct DateNightWidget: Widget {
     let kind: String = "DateNightWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.dateNights)) { entry in
+        StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.widget2)) { entry in
             if #available(iOS 17.0, *) {
                 LovelyWidgetEntryView(entry: entry)
                     .containerBackground(.purple.tertiary, for: .widget)
@@ -40,8 +52,8 @@ struct DateNightWidget: Widget {
                     .background(Color.purple.opacity(0.1))
             }
         }
-        .configurationDisplayName("Date Nights")
-        .description("Shows photos from your romantic date nights")
+        .configurationDisplayName("Widget 2")
+        .description("Configure this widget in the Lovely app")
         .supportedFamilies([.systemSmall])
     }
 }
@@ -51,7 +63,7 @@ struct AnniversaryWidget: Widget {
     let kind: String = "AnniversaryWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.anniversaries)) { entry in
+        StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.widget3)) { entry in
             if #available(iOS 17.0, *) {
                 LovelyWidgetEntryView(entry: entry)
                     .containerBackground(.pink.tertiary, for: .widget)
@@ -61,8 +73,8 @@ struct AnniversaryWidget: Widget {
                     .background(Color.pink.opacity(0.1))
             }
         }
-        .configurationDisplayName("Anniversaries")
-        .description("Celebrates your special anniversary moments")
+        .configurationDisplayName("Widget 3")
+        .description("Configure this widget in the Lovely app")
         .supportedFamilies([.systemSmall])
     }
 }
@@ -72,7 +84,7 @@ struct TravelWidget: Widget {
     let kind: String = "TravelWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.travel)) { entry in
+        StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.widget4)) { entry in
             if #available(iOS 17.0, *) {
                 LovelyWidgetEntryView(entry: entry)
                     .containerBackground(.blue.tertiary, for: .widget)
@@ -82,8 +94,8 @@ struct TravelWidget: Widget {
                     .background(Color.blue.opacity(0.1))
             }
         }
-        .configurationDisplayName("Travel Adventures")
-        .description("Relive your travel memories together")
+        .configurationDisplayName("Widget 4")
+        .description("Configure this widget in the Lovely app")
         .supportedFamilies([.systemSmall])
     }
 }
@@ -100,25 +112,28 @@ struct PhotoTimelineProvider: TimelineProvider {
     let widgetType: WidgetType
     typealias Entry = PhotoTimelineEntry
 
-    init(widgetType: WidgetType = WidgetType.allEvents) {
+    init(widgetType: WidgetType = WidgetType.widget1) {
         self.widgetType = widgetType
     }
 
     func placeholder(in context: Context) -> PhotoTimelineEntry {
-        PhotoTimelineEntry(
+        let customTitle = getCustomTitle(for: widgetType)
+        return PhotoTimelineEntry(
             date: Date(),
             photo: nil,
-            eventTitle: "Sample Event",
-            eventDate: "Today"
+            eventTitle: customTitle,
+            eventDate: "No events yet"
         )
     }
 
     func getSnapshot(in context: Context, completion: @escaping (PhotoTimelineEntry) -> ()) {
+        // Try to get the custom title, fall back to default
+        let customTitle = getCustomTitle(for: widgetType)
         let entry = PhotoTimelineEntry(
             date: Date(),
             photo: nil,
-            eventTitle: "Date Night",
-            eventDate: "Yesterday"
+            eventTitle: customTitle,
+            eventDate: "Preview"
         )
         completion(entry)
     }
@@ -223,7 +238,7 @@ struct LovelyWidgetEntryView: View {
 
 // MARK: - Widget Data Management
 
-func loadWidgetData(for widgetType: WidgetType = WidgetType.allEvents) -> LovelyWidgetConfig {
+func loadWidgetData(for widgetType: WidgetType = WidgetType.widget1) -> LovelyWidgetConfig {
     guard let sharedContainer = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.lovely.app"),
           let data = try? Data(contentsOf: sharedContainer.appendingPathComponent(widgetType.fileName)),
           let configuration = try? JSONDecoder().decode(WidgetConfigurationData.self, from: data) else {

@@ -3,44 +3,35 @@ import SwiftUI
 // MARK: - Widget Types
 
 enum WidgetType: String, CaseIterable {
-    case allEvents = "all"
-    case dateNights = "date_nights"
-    case anniversaries = "anniversaries"
-    case travel = "travel"
+    case widget1 = "widget1"
+    case widget2 = "widget2"
+    case widget3 = "widget3"
+    case widget4 = "widget4"
 
-    var displayName: String {
+    var defaultTitle: String {
         switch self {
-        case .allEvents: return "All Events"
-        case .dateNights: return "Date Nights"
-        case .anniversaries: return "Anniversaries"
-        case .travel: return "Travel"
-        }
-    }
-
-    var description: String {
-        switch self {
-        case .allEvents: return "Cycles through photos from all your events"
-        case .dateNights: return "Shows photos from your romantic date nights"
-        case .anniversaries: return "Celebrates your special anniversary moments"
-        case .travel: return "Relive your travel memories together"
+        case .widget1: return "Widget 1"
+        case .widget2: return "Widget 2"
+        case .widget3: return "Widget 3"
+        case .widget4: return "Widget 4"
         }
     }
 
     var icon: String {
         switch self {
-        case .allEvents: return "heart.fill"
-        case .dateNights: return "wineglass"
-        case .anniversaries: return "gift.fill"
-        case .travel: return "airplane"
+        case .widget1: return "heart.fill"
+        case .widget2: return "wineglass"
+        case .widget3: return "gift.fill"
+        case .widget4: return "airplane"
         }
     }
 
     var color: Color {
         switch self {
-        case .allEvents: return .purple
-        case .dateNights: return .pink
-        case .anniversaries: return .red
-        case .travel: return .blue
+        case .widget1: return .purple
+        case .widget2: return .pink
+        case .widget3: return .red
+        case .widget4: return .blue
         }
     }
 
@@ -48,19 +39,6 @@ enum WidgetType: String, CaseIterable {
         return "widget_photos_\(rawValue).json"
     }
 
-    // Filter events based on widget type
-    func filterEvents(_ events: [CalendarEvent]) -> [CalendarEvent] {
-        switch self {
-        case .allEvents:
-            return events
-        case .dateNights:
-            return events.filter { $0.title.lowercased().contains("date") || $0.title.lowercased().contains("dinner") || $0.title.lowercased().contains("restaurant") }
-        case .anniversaries:
-            return events.filter { $0.title.lowercased().contains("anniversary") || $0.title.lowercased().contains("birthday") }
-        case .travel:
-            return events.filter { $0.title.lowercased().contains("trip") || $0.title.lowercased().contains("vacation") || $0.title.lowercased().contains("travel") }
-        }
-    }
 }
 
 // MARK: - Sheet Management
@@ -158,18 +136,11 @@ struct WidgetsView: View {
                             .font(.title2)
                             .fontWeight(.bold)
 
-                        Text("Choose different widget types for your home screen. Each widget can show specific types of events.")
+                        Text("Create custom widgets for your home screen. Each widget can be configured with your chosen events.")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
 
-                    Spacer()
-
-                    Button("Configure All") {
-                        configureAllWidgets()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
                 }
                 .padding(.horizontal)
 
@@ -268,9 +239,9 @@ struct WidgetTypeCard: View {
     let availableEvents: [CalendarEvent]
     let onConfigure: () -> Void
 
-    private var filteredEvents: [CalendarEvent] {
-        widgetType.filterEvents(availableEvents)
-    }
+    @State private var customTitle: String = ""
+    @State private var isEditingTitle = false
+    @State private var showingTitleEditor = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -281,18 +252,23 @@ struct WidgetTypeCard: View {
 
                 Spacer()
 
-                Text("\(filteredEvents.count)")
+                Button {
+                    showingTitleEditor = true
+                } label: {
+                    Image(systemName: "pencil")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Text("\(availableEvents.count)")
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundColor(.secondary)
             }
 
-            Text(widgetType.displayName)
+            Text(customTitle.isEmpty ? widgetType.defaultTitle : customTitle)
                 .font(.headline)
                 .fontWeight(.semibold)
-
-            Text(widgetType.description)
-                .font(.caption)
                 .foregroundColor(.secondary)
                 .lineLimit(2)
 
@@ -313,6 +289,18 @@ struct WidgetTypeCard: View {
         .frame(height: 160)
         .background(Color(.systemGray6))
         .cornerRadius(12)
+        .onAppear {
+            customTitle = WidgetDataManager.shared.getWidgetTitle(for: widgetType)
+        }
+        .sheet(isPresented: $showingTitleEditor) {
+            TitleEditorView(
+                currentTitle: customTitle.isEmpty ? widgetType.defaultTitle : customTitle,
+                widgetType: widgetType
+            ) { newTitle in
+                customTitle = newTitle
+                WidgetDataManager.shared.setWidgetTitle(newTitle, for: widgetType)
+            }
+        }
     }
 }
 
@@ -325,7 +313,7 @@ struct WidgetEventSelectionView: View {
     @Environment(\.dismiss) private var dismiss
 
     private var filteredEvents: [CalendarEvent] {
-        widgetType.filterEvents(availableEvents)
+        availableEvents
     }
 
     var body: some View {
@@ -337,7 +325,7 @@ struct WidgetEventSelectionView: View {
                     eventSelectionView
                 }
             }
-            .navigationTitle(widgetType.displayName)
+            .navigationTitle(WidgetDataManager.shared.getWidgetTitle(for: widgetType))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -358,8 +346,8 @@ struct WidgetEventSelectionView: View {
                 }
             }
             .onAppear {
-                // Auto-select all filtered events
-                selectedEvents = Set(filteredEvents.compactMap { $0.id })
+                // Start with no events selected
+                selectedEvents = []
             }
         }
     }
@@ -371,7 +359,7 @@ struct WidgetEventSelectionView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
 
-                Text(widgetType.description)
+                Text("Configure this widget with your chosen events")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
@@ -439,12 +427,7 @@ struct WidgetEventSelectionView: View {
     }
 
     private func getSampleKeywords() -> String {
-        switch widgetType {
-        case .allEvents: return "any"
-        case .dateNights: return "date, dinner, restaurant"
-        case .anniversaries: return "anniversary, birthday"
-        case .travel: return "trip, vacation, travel"
-        }
+        return "any"
     }
 }
 
@@ -516,12 +499,12 @@ struct WidgetPreviewView: View {
                     .padding(.top, 40)
 
                 VStack(spacing: 12) {
-                    Text(widgetType != nil ? "\(widgetType!.displayName) Widget Configured!" : "Widgets Configured!")
+                    Text(widgetType != nil ? "\(WidgetDataManager.shared.getWidgetTitle(for: widgetType!)) Configured!" : "Widgets Configured!")
                         .font(.title)
                         .fontWeight(.bold)
 
                     if let widgetType = widgetType {
-                        Text("Your \(widgetType.displayName.lowercased()) widget has been configured. Photos will cycle every 20 minutes.")
+                        Text("Your \(WidgetDataManager.shared.getWidgetTitle(for: widgetType).lowercased()) widget has been configured. Photos will cycle every 20 minutes.")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -556,7 +539,7 @@ struct WidgetPreviewView: View {
                         HStack {
                             Text("3.")
                                 .fontWeight(.semibold)
-                            Text("Search for \"Lovely\" and choose your widget type")
+                            Text("Search for \"Lovely\" and choose \"\(WidgetDataManager.shared.getWidgetTitle(for: widgetType!))\"")
                         }
 
                         HStack {
@@ -582,7 +565,7 @@ struct WidgetPreviewView: View {
                             HStack {
                                 Image(systemName: type.icon)
                                     .foregroundColor(type.color)
-                                Text(type.displayName)
+                                Text(WidgetDataManager.shared.getWidgetTitle(for: type))
                                     .font(.subheadline)
                                 Spacer()
                             }
@@ -600,7 +583,7 @@ struct WidgetPreviewView: View {
                         HStack {
                             Image(systemName: widgetType.icon)
                                 .foregroundColor(widgetType.color)
-                            Text(widgetType.displayName)
+                            Text(WidgetDataManager.shared.getWidgetTitle(for: widgetType))
                                 .font(.subheadline)
                             Spacer()
                         }
@@ -622,6 +605,68 @@ struct WidgetPreviewView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+struct TitleEditorView: View {
+    let currentTitle: String
+    let widgetType: WidgetType
+    let onSave: (String) -> Void
+
+    @State private var editedTitle: String = ""
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Widget Title")
+                        .font(.headline)
+
+                    TextField("Enter widget title", text: $editedTitle)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.body)
+                }
+
+                HStack {
+                    Image(systemName: widgetType.icon)
+                        .font(.title2)
+                        .foregroundColor(widgetType.color)
+
+                    Text(editedTitle.isEmpty ? "Widget Title" : editedTitle)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+
+                    Spacer()
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Edit Widget")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        onSave(editedTitle.isEmpty ? widgetType.defaultTitle : editedTitle)
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
+        .onAppear {
+            editedTitle = currentTitle == widgetType.defaultTitle ? "" : currentTitle
         }
     }
 }
