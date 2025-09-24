@@ -17,88 +17,113 @@ func getCustomTitle(for widgetType: WidgetType) -> String {
 // MARK: - Widget Definitions
 
 @available(iOS 14.0, *)
-struct LovelyWidget: Widget {
-    let kind: String = "LovelyWidget"
+struct Widget1: Widget {
+    let kind: String = "Widget1"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.widget1)) { entry in
             if #available(iOS 17.0, *) {
                 LovelyWidgetEntryView(entry: entry)
-                    .containerBackground(.fill.tertiary, for: .widget)
+                    .containerBackground(for: .widget) {
+                        if let photo = entry.photo {
+                            Image(uiImage: photo)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } else {
+                            Color(.systemGray6)
+                        }
+                    }
             } else {
                 LovelyWidgetEntryView(entry: entry)
-                    .padding()
-                    .background()
             }
         }
         .configurationDisplayName("Widget 1")
         .description("Configure this widget in the Lovely app")
-        .supportedFamilies([.systemSmall])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
 @available(iOS 14.0, *)
-struct DateNightWidget: Widget {
-    let kind: String = "DateNightWidget"
+struct Widget2: Widget {
+    let kind: String = "Widget2"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.widget2)) { entry in
             if #available(iOS 17.0, *) {
                 LovelyWidgetEntryView(entry: entry)
-                    .containerBackground(.purple.tertiary, for: .widget)
+                    .containerBackground(for: .widget) {
+                        if let photo = entry.photo {
+                            Image(uiImage: photo)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } else {
+                            Color(.systemGray6)
+                        }
+                    }
             } else {
                 LovelyWidgetEntryView(entry: entry)
-                    .padding()
-                    .background(Color.purple.opacity(0.1))
             }
         }
         .configurationDisplayName("Widget 2")
         .description("Configure this widget in the Lovely app")
-        .supportedFamilies([.systemSmall])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
 @available(iOS 14.0, *)
-struct AnniversaryWidget: Widget {
-    let kind: String = "AnniversaryWidget"
+struct Widget3: Widget {
+    let kind: String = "Widget3"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.widget3)) { entry in
             if #available(iOS 17.0, *) {
                 LovelyWidgetEntryView(entry: entry)
-                    .containerBackground(.pink.tertiary, for: .widget)
+                    .containerBackground(for: .widget) {
+                        if let photo = entry.photo {
+                            Image(uiImage: photo)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } else {
+                            Color(.systemGray6)
+                        }
+                    }
             } else {
                 LovelyWidgetEntryView(entry: entry)
-                    .padding()
-                    .background(Color.pink.opacity(0.1))
             }
         }
         .configurationDisplayName("Widget 3")
         .description("Configure this widget in the Lovely app")
-        .supportedFamilies([.systemSmall])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
 @available(iOS 14.0, *)
-struct TravelWidget: Widget {
-    let kind: String = "TravelWidget"
+struct Widget4: Widget {
+    let kind: String = "Widget4"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: PhotoTimelineProvider(widgetType: WidgetType.widget4)) { entry in
             if #available(iOS 17.0, *) {
                 LovelyWidgetEntryView(entry: entry)
-                    .containerBackground(.blue.tertiary, for: .widget)
+                    .containerBackground(for: .widget) {
+                        if let photo = entry.photo {
+                            Image(uiImage: photo)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } else {
+                            Color(.systemGray6)
+                        }
+                    }
             } else {
                 LovelyWidgetEntryView(entry: entry)
-                    .padding()
-                    .background(Color.blue.opacity(0.1))
             }
         }
         .configurationDisplayName("Widget 4")
         .description("Configure this widget in the Lovely app")
-        .supportedFamilies([.systemSmall])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
+
 
 struct PhotoTimelineEntry: TimelineEntry {
     let date: Date
@@ -106,6 +131,7 @@ struct PhotoTimelineEntry: TimelineEntry {
     let eventTitle: String
     let eventDate: String
 }
+
 
 
 struct PhotoTimelineProvider: TimelineProvider {
@@ -155,6 +181,7 @@ struct PhotoTimelineProvider: TimelineProvider {
             )
             entries.append(entry)
         } else {
+            // For now, just show the first photo (single photo display)
             // Create timeline entries cycling through photos every 20 minutes
             for i in 0..<72 { // 24 hours worth of 20-minute intervals
                 let entryDate = Calendar.current.date(byAdding: .minute, value: i * 20, to: currentDate)!
@@ -175,66 +202,154 @@ struct PhotoTimelineProvider: TimelineProvider {
     }
 }
 
+
 struct LovelyWidgetEntryView: View {
     var entry: PhotoTimelineProvider.Entry
+    @Environment(\.widgetFamily) var family
+
+    private var titleFont: Font {
+        switch family {
+        case .systemSmall:
+            return .caption
+        case .systemMedium:
+            return .subheadline
+        case .systemLarge:
+            return .headline
+        default:
+            return .caption
+        }
+    }
+
+    private var dateFont: Font {
+        switch family {
+        case .systemSmall:
+            return .caption2
+        case .systemMedium:
+            return .caption
+        case .systemLarge:
+            return .subheadline
+        default:
+            return .caption2
+        }
+    }
+
+    private var textPadding: CGFloat {
+        switch family {
+        case .systemSmall:
+            return 2
+        case .systemMedium:
+            return 3
+        case .systemLarge:
+            return 4
+        default:
+            return 2
+        }
+    }
 
     var body: some View {
         ZStack {
-            if let photo = entry.photo {
-                Image(uiImage: photo)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .clipped()
-                    .overlay(
-                        // Gradient overlay for text readability
-                        LinearGradient(
-                            gradient: Gradient(colors: [.clear, .black.opacity(0.6)]),
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
+            if #available(iOS 17.0, *) {
+                // For iOS 17+, photo is in containerBackground, so only show text overlay
+                if entry.photo != nil {
+                    VStack {
+                        Spacer()
 
-                VStack {
-                    Spacer()
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(entry.eventTitle)
+                                    .font(titleFont)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                                    .shadow(color: .black.opacity(0.8), radius: 2, x: 1, y: 1)
 
-                    VStack(alignment: .leading, spacing: 2) {
+                                Text(entry.eventDate)
+                                    .font(dateFont)
+                                    .foregroundColor(.white.opacity(0.9))
+                                    .lineLimit(1)
+                                    .shadow(color: .black.opacity(0.8), radius: 2, x: 1, y: 1)
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal, textPadding)
+                        .padding(.bottom, textPadding)
+                    }
+                } else {
+                    // Placeholder when no photo is available
+                    VStack(spacing: 8) {
+                        Image(systemName: "heart.fill")
+                            .font(.title)
+                            .foregroundColor(.purple)
+
                         Text(entry.eventTitle)
                             .font(.caption)
                             .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                            .lineLimit(1)
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.primary)
 
                         Text(entry.eventDate)
                             .font(.caption2)
-                            .foregroundColor(.white.opacity(0.8))
-                            .lineLimit(1)
+                            .foregroundColor(.secondary)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 8)
-                    .padding(.bottom, 8)
                 }
             } else {
-                // Placeholder when no photo is available
-                VStack(spacing: 8) {
-                    Image(systemName: "heart.fill")
-                        .font(.title)
-                        .foregroundColor(.purple)
+                // For iOS 16 and below, show photo in the main view
+                if let photo = entry.photo {
+                    Image(uiImage: photo)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .clipped()
 
-                    Text(entry.eventTitle)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.primary)
+                    VStack {
+                        Spacer()
 
-                    Text(entry.eventDate)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(entry.eventTitle)
+                                    .font(titleFont)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                                    .shadow(color: .black.opacity(0.8), radius: 2, x: 1, y: 1)
+
+                                Text(entry.eventDate)
+                                    .font(dateFont)
+                                    .foregroundColor(.white.opacity(0.9))
+                                    .lineLimit(1)
+                                    .shadow(color: .black.opacity(0.8), radius: 2, x: 1, y: 1)
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal, textPadding)
+                        .padding(.bottom, textPadding)
+                    }
+                } else {
+                    // Placeholder when no photo is available
+                    VStack(spacing: 8) {
+                        Image(systemName: "heart.fill")
+                            .font(.title)
+                            .foregroundColor(.purple)
+
+                        Text(entry.eventTitle)
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.primary)
+
+                        Text(entry.eventDate)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(.systemGray6))
                 }
-                .padding(8)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
+
 
 // MARK: - Widget Data Management
 
@@ -261,8 +376,9 @@ func loadWidgetData(for widgetType: WidgetType = WidgetType.widget1) -> LovelyWi
     return LovelyWidgetConfig(photos: photos, selectedEventIds: configuration.selectedEventIds)
 }
 
+
 #Preview(as: .systemSmall) {
-    LovelyWidget()
+    Widget1()
 } timeline: {
     PhotoTimelineEntry(
         date: .now,

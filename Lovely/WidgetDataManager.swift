@@ -9,6 +9,8 @@ struct WidgetConfigurationData: Codable {
     let selectedEventIds: [String]
     let lastUpdated: Date
     let customTitle: String?
+    let customIcon: String?
+    let customColorName: String?
 }
 
 struct WidgetPhotoConfigData: Codable {
@@ -29,7 +31,7 @@ class WidgetDataManager {
 
     // MARK: - Widget Configuration
 
-    func updateWidgetConfiguration(selectedEvents: [CalendarEvent], for widgetType: WidgetType = .widget1) {
+    func updateWidgetConfiguration(selectedEvents: [CalendarEvent], for widgetType: WidgetType = .widget1, userId: String? = nil) {
         guard let containerURL = sharedContainerURL else {
             print("❌ Failed to get shared container URL")
             return
@@ -65,27 +67,35 @@ class WidgetDataManager {
                 widgetPhotos = Array(widgetPhotos.prefix(maxPhotos))
             }
 
-            // Load existing configuration to preserve custom title
-            let fileURL = containerURL.appendingPathComponent(widgetType.fileName)
+            // Load existing configuration to preserve custom title, icon, and color
+            let fileName = userId != nil ? widgetType.fileName(for: userId!) : widgetType.fileName
+            let fileURL = containerURL.appendingPathComponent(fileName)
             let existingTitle: String?
+            let existingIcon: String?
+            let existingColor: String?
             if let data = try? Data(contentsOf: fileURL),
                let existingConfig = try? JSONDecoder().decode(WidgetConfigurationData.self, from: data) {
                 existingTitle = existingConfig.customTitle
+                existingIcon = existingConfig.customIcon
+                existingColor = existingConfig.customColorName
             } else {
                 existingTitle = nil
+                existingIcon = nil
+                existingColor = nil
             }
 
             let configuration = WidgetConfigurationData(
                 photos: widgetPhotos,
                 selectedEventIds: selectedEvents.compactMap { $0.id },
                 lastUpdated: Date(),
-                customTitle: existingTitle
+                customTitle: existingTitle,
+                customIcon: existingIcon,
+                customColorName: existingColor
             )
 
             // Save configuration to shared container
             do {
                 let data = try JSONEncoder().encode(configuration)
-                let fileURL = containerURL.appendingPathComponent(widgetType.fileName)
                 try data.write(to: fileURL)
 
                 // Tell WidgetKit to reload the specific widget
@@ -98,10 +108,11 @@ class WidgetDataManager {
         }
     }
 
-    func clearWidgetConfiguration(for widgetType: WidgetType = .widget1) {
+    func clearWidgetConfiguration(for widgetType: WidgetType = .widget1, userId: String? = nil) {
         guard let containerURL = sharedContainerURL else { return }
 
-        let fileURL = containerURL.appendingPathComponent(widgetType.fileName)
+        let fileName = userId != nil ? widgetType.fileName(for: userId!) : widgetType.fileName
+        let fileURL = containerURL.appendingPathComponent(fileName)
         try? FileManager.default.removeItem(at: fileURL)
 
         // Reload widget to show empty state
@@ -124,10 +135,11 @@ class WidgetDataManager {
 
     // MARK: - Widget Title Management
 
-    func setWidgetTitle(_ title: String, for widgetType: WidgetType) {
+    func setWidgetTitle(_ title: String, for widgetType: WidgetType, userId: String? = nil) {
         guard let containerURL = sharedContainerURL else { return }
 
-        let fileURL = containerURL.appendingPathComponent(widgetType.fileName)
+        let fileName = userId != nil ? widgetType.fileName(for: userId!) : widgetType.fileName
+        let fileURL = containerURL.appendingPathComponent(fileName)
 
         // Load existing configuration or create new one
         var configuration: WidgetConfigurationData
@@ -137,14 +149,18 @@ class WidgetDataManager {
                 photos: existingConfig.photos,
                 selectedEventIds: existingConfig.selectedEventIds,
                 lastUpdated: Date(),
-                customTitle: title
+                customTitle: title,
+                customIcon: existingConfig.customIcon,
+                customColorName: existingConfig.customColorName
             )
         } else {
             configuration = WidgetConfigurationData(
                 photos: [],
                 selectedEventIds: [],
                 lastUpdated: Date(),
-                customTitle: title
+                customTitle: title,
+                customIcon: nil,
+                customColorName: nil
             )
         }
 
@@ -158,10 +174,50 @@ class WidgetDataManager {
         }
     }
 
-    func getWidgetTitle(for widgetType: WidgetType) -> String {
+    func setWidgetIcon(_ icon: String, for widgetType: WidgetType, userId: String? = nil) {
+        guard let containerURL = sharedContainerURL else { return }
+
+        let fileName = userId != nil ? widgetType.fileName(for: userId!) : widgetType.fileName
+        let fileURL = containerURL.appendingPathComponent(fileName)
+
+        // Load existing configuration or create new one
+        var configuration: WidgetConfigurationData
+        if let data = try? Data(contentsOf: fileURL),
+           let existingConfig = try? JSONDecoder().decode(WidgetConfigurationData.self, from: data) {
+            configuration = WidgetConfigurationData(
+                photos: existingConfig.photos,
+                selectedEventIds: existingConfig.selectedEventIds,
+                lastUpdated: Date(),
+                customTitle: existingConfig.customTitle,
+                customIcon: icon,
+                customColorName: existingConfig.customColorName
+            )
+        } else {
+            configuration = WidgetConfigurationData(
+                photos: [],
+                selectedEventIds: [],
+                lastUpdated: Date(),
+                customTitle: nil,
+                customIcon: icon,
+                customColorName: nil
+            )
+        }
+
+        // Save updated configuration
+        do {
+            let data = try JSONEncoder().encode(configuration)
+            try data.write(to: fileURL)
+            WidgetCenter.shared.reloadTimelines(ofKind: getWidgetKind(for: widgetType))
+        } catch {
+            print("❌ Failed to save widget icon: \(error)")
+        }
+    }
+
+    func getWidgetTitle(for widgetType: WidgetType, userId: String? = nil) -> String {
         guard let containerURL = sharedContainerURL else { return widgetType.defaultTitle }
 
-        let fileURL = containerURL.appendingPathComponent(widgetType.fileName)
+        let fileName = userId != nil ? widgetType.fileName(for: userId!) : widgetType.fileName
+        let fileURL = containerURL.appendingPathComponent(fileName)
 
         if let data = try? Data(contentsOf: fileURL),
            let configuration = try? JSONDecoder().decode(WidgetConfigurationData.self, from: data),
@@ -170,6 +226,21 @@ class WidgetDataManager {
         }
 
         return widgetType.defaultTitle
+    }
+
+    func getWidgetIcon(for widgetType: WidgetType, userId: String? = nil) -> String {
+        guard let containerURL = sharedContainerURL else { return widgetType.icon }
+
+        let fileName = userId != nil ? widgetType.fileName(for: userId!) : widgetType.fileName
+        let fileURL = containerURL.appendingPathComponent(fileName)
+
+        if let data = try? Data(contentsOf: fileURL),
+           let configuration = try? JSONDecoder().decode(WidgetConfigurationData.self, from: data),
+           let customIcon = configuration.customIcon {
+            return customIcon
+        }
+
+        return widgetType.icon
     }
 
     // MARK: - Helper Methods
@@ -212,10 +283,10 @@ class WidgetDataManager {
     // Helper method to get widget kind string
     private func getWidgetKind(for widgetType: WidgetType) -> String {
         switch widgetType {
-        case .widget1: return "LovelyWidget"
-        case .widget2: return "DateNightWidget"
-        case .widget3: return "AnniversaryWidget"
-        case .widget4: return "TravelWidget"
+        case .widget1: return "Widget1"
+        case .widget2: return "Widget2"
+        case .widget3: return "Widget3"
+        case .widget4: return "Widget4"
         }
     }
 }

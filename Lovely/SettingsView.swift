@@ -1,14 +1,17 @@
 import SwiftUI
+import FirebaseFirestore
 
 struct SettingsView: View {
     @ObservedObject var authManager: AuthManager
     @ObservedObject var userManager: UserManager
-    @StateObject private var userSession = UserSession.shared
+    @ObservedObject private var userSession = UserSession.shared
     @Environment(\.dismiss) private var dismiss
     @State private var showingDeleteAlert = false
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var hideEventsWithoutPhotos = false
+    @State private var originalHideEventsWithoutPhotos = false
+    @State private var hasAppeared = false
 
     var body: some View {
         NavigationView {
@@ -105,9 +108,6 @@ struct SettingsView: View {
 
                 Section("Preferences") {
                     Toggle("Hide events without photos", isOn: $hideEventsWithoutPhotos)
-                        .onChange(of: hideEventsWithoutPhotos) {
-                            updateHideEventsWithoutPhotosSetting()
-                        }
                 }
 
                 Section("Actions") {
@@ -127,7 +127,7 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Done") {
-                        dismiss()
+                        saveSettingsAndDismiss()
                     }
                 }
             }
@@ -147,27 +147,61 @@ struct SettingsView: View {
         }
         .onAppear {
             loadUserSettings()
+            hasAppeared = true
         }
     }
 
     private func loadUserSettings() {
         hideEventsWithoutPhotos = userSession.userSettings?.hideEventsWithoutPhotos ?? false
+        originalHideEventsWithoutPhotos = hideEventsWithoutPhotos
     }
 
-    private func updateHideEventsWithoutPhotosSetting() {
-        Task {
-            do {
-                try await userManager.updateUserSettings(hideEventsWithoutPhotos: hideEventsWithoutPhotos)
-            } catch {
-                alertMessage = "Failed to update settings: \(error.localizedDescription)"
-                showAlert = true
-                // Revert the toggle on error
-                hideEventsWithoutPhotos = userSession.userSettings?.hideEventsWithoutPhotos ?? false
+    private func saveSettingsAndDismiss() {
+        // Check if settings have changed
+        if hideEventsWithoutPhotos != originalHideEventsWithoutPhotos {
+            Task {
+                do {
+                    try await userManager.updateUserSettings(hideEventsWithoutPhotos: hideEventsWithoutPhotos)
+                    print("✅ Settings saved successfully")
+                    await MainActor.run {
+                        dismiss()
+                    }
+                } catch {
+                    print("❌ Settings save failed: \(error)")
+                    await MainActor.run {
+                        alertMessage = "Failed to save settings: \(error.localizedDescription)"
+                        showAlert = true
+                    }
+                }
             }
+        } else {
+            // No changes, just dismiss
+            dismiss()
         }
     }
 
     private func signOut() {
+        // Save any pending settings changes before signing out
+        if hideEventsWithoutPhotos != originalHideEventsWithoutPhotos {
+            Task {
+                do {
+                    try await userManager.updateUserSettings(hideEventsWithoutPhotos: hideEventsWithoutPhotos)
+                    await MainActor.run {
+                        performSignOut()
+                    }
+                } catch {
+                    await MainActor.run {
+                        alertMessage = "Failed to save settings before sign out: \(error.localizedDescription)"
+                        showAlert = true
+                    }
+                }
+            }
+        } else {
+            performSignOut()
+        }
+    }
+
+    private func performSignOut() {
         do {
             try authManager.signOut()
             dismiss()

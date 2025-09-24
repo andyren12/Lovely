@@ -4,9 +4,9 @@ import SwiftUI
 @main
 struct LovelyWidgetBundle: WidgetBundle {
     var body: some Widget {
-        LovelyWidget()
-        DateNightWidget()
-        AnniversaryWidget()
-        TravelWidget()
+        Widget1()
+        Widget2()
+        Widget3()
+        Widget4()
     }
 }

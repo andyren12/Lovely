@@ -144,6 +144,8 @@ struct CalendarView: View {
                     if let coupleId = userSession.coupleId {
                         do {
                             try await calendarManager.addEvent(event, coupleId: coupleId)
+                            // Refresh widget with updated events
+                            WidgetDataManager.shared.updateAllWidgetTypes(with: calendarManager.events)
                         } catch {
                             print("❌ Failed to add event: \(error)")
                         }
@@ -164,6 +166,8 @@ struct CalendarView: View {
                     // Update in CalendarManager
                     Task {
                         try? await calendarManager.updateEvent(updatedEvent)
+                        // Refresh widget with updated events
+                        WidgetDataManager.shared.updateAllWidgetTypes(with: calendarManager.events)
                     }
                 }
             ))
@@ -246,6 +250,9 @@ struct CalendarView: View {
                         ImageCache.shared.removeImage(forKey: cacheKey)
                     }
                 }
+
+                // Refresh widget with updated events
+                WidgetDataManager.shared.updateAllWidgetTypes(with: calendarManager.events)
 
                 print("Successfully deleted event '\(event.title)' and all associated photos")
             } catch {

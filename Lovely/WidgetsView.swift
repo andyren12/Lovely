@@ -35,24 +35,16 @@ enum WidgetType: String, CaseIterable {
         }
     }
 
+    func fileName(for userId: String) -> String {
+        // Regular widgets are user-specific
+        return "widget_photos_\(rawValue)_\(userId).json"
+    }
+
     var fileName: String {
+        // Fallback for legacy usage - will be replaced with user-specific version
         return "widget_photos_\(rawValue).json"
     }
 
-}
-
-// MARK: - Sheet Management
-
-enum SheetType: Identifiable {
-    case eventSelection(WidgetType)
-    case widgetPreview(WidgetType?)
-
-    var id: String {
-        switch self {
-        case .eventSelection(let type): return "eventSelection_\(type.rawValue)"
-        case .widgetPreview(let type): return "widgetPreview_\(type?.rawValue ?? "all")"
-        }
-    }
 }
 
 struct WidgetsView: View {
@@ -61,10 +53,19 @@ struct WidgetsView: View {
     @StateObject private var userSession = UserSession.shared
     @StateObject private var calendarManager = CalendarManager()
     @State private var selectedWidgetType: WidgetType?
-    @State private var selectedEvents: Set<String> = []
     @State private var showingWidgetPreview = false
-    @State private var showingEventSelection = false
+    @State private var showingWidgetEdit = false
     @State private var hasLoadedEvents = false
+    @State private var refreshTrigger = 0
+
+    // Computed property to ensure we only show sheet when widget type is available
+    private var shouldShowEditSheet: Bool {
+        showingWidgetEdit && selectedWidgetType != nil
+    }
+
+    private var shouldShowPreviewSheet: Bool {
+        showingWidgetPreview && selectedWidgetType != nil
+    }
 
     var availableEvents: [CalendarEvent] {
         calendarManager.events.filter { !$0.photoURLs.isEmpty }
@@ -91,39 +92,35 @@ struct WidgetsView: View {
             hasLoadedEvents = false
             loadEvents()
         }
-        .sheet(item: Binding<SheetType?>(
-            get: {
-                if showingEventSelection, let widgetType = selectedWidgetType {
-                    return .eventSelection(widgetType)
-                } else if showingWidgetPreview {
-                    return .widgetPreview(selectedWidgetType)
-                }
-                return nil
-            },
+        .sheet(isPresented: Binding<Bool>(
+            get: { shouldShowEditSheet },
             set: { newValue in
-                showingEventSelection = false
-                showingWidgetPreview = false
-                if case .eventSelection = newValue {
-                    showingEventSelection = true
-                } else if case .widgetPreview = newValue {
-                    showingWidgetPreview = true
+                if !newValue {
+                    showingWidgetEdit = false
+                    selectedWidgetType = nil
                 }
             }
-        )) { sheetType in
-            switch sheetType {
-            case .eventSelection(let widgetType):
-                WidgetEventSelectionView(
-                    widgetType: widgetType,
-                    availableEvents: availableEvents,
-                    onConfigure: { events in
-                        WidgetDataManager.shared.updateWidgetConfiguration(selectedEvents: events, for: widgetType)
-                        showingEventSelection = false
-                        showingWidgetPreview = true
-                    }
-                )
-            case .widgetPreview(let widgetType):
-                WidgetPreviewView(widgetType: widgetType, events: availableEvents)
+        )) {
+            WidgetEditView(
+                widgetType: selectedWidgetType!,  // Force unwrap is safe due to shouldShowEditSheet check
+                availableEvents: availableEvents,
+                onComplete: {
+                    showingWidgetEdit = false
+                    selectedWidgetType = nil
+                    refreshTrigger += 1  // Trigger refresh
+                }
+            )
+        }
+        .sheet(isPresented: Binding<Bool>(
+            get: { shouldShowPreviewSheet },
+            set: { newValue in
+                if !newValue {
+                    showingWidgetPreview = false
+                    selectedWidgetType = nil
+                }
             }
+        )) {
+            WidgetPreviewView(widgetType: selectedWidgetType!, events: availableEvents)  // Force unwrap is safe
         }
     }
 
@@ -132,7 +129,7 @@ struct WidgetsView: View {
             VStack(alignment: .leading, spacing: 20) {
                 HStack {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Widget Types")
+                        Text("Widgets")
                             .font(.title2)
                             .fontWeight(.bold)
 
@@ -148,10 +145,11 @@ struct WidgetsView: View {
                     ForEach(WidgetType.allCases, id: \.self) { widgetType in
                         WidgetTypeCard(
                             widgetType: widgetType,
-                            availableEvents: availableEvents
+                            availableEvents: availableEvents,
+                            refreshTrigger: refreshTrigger
                         ) {
                             selectedWidgetType = widgetType
-                            showingEventSelection = true
+                            showingWidgetEdit = true
                         }
                     }
                 }
@@ -218,16 +216,6 @@ struct WidgetsView: View {
         }
     }
 
-    private func toggleEventSelection(_ event: CalendarEvent) {
-        guard let eventId = event.id else { return }
-
-        if selectedEvents.contains(eventId) {
-            selectedEvents.remove(eventId)
-        } else {
-            selectedEvents.insert(eventId)
-        }
-    }
-
     private func configureAllWidgets() {
         WidgetDataManager.shared.updateAllWidgetTypes(with: availableEvents)
         showingWidgetPreview = true
@@ -237,40 +225,23 @@ struct WidgetsView: View {
 struct WidgetTypeCard: View {
     let widgetType: WidgetType
     let availableEvents: [CalendarEvent]
+    let refreshTrigger: Int
     let onConfigure: () -> Void
 
     @State private var customTitle: String = ""
-    @State private var isEditingTitle = false
-    @State private var showingTitleEditor = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Widget title
             HStack {
-                Image(systemName: widgetType.icon)
-                    .font(.title2)
-                    .foregroundColor(widgetType.color)
-
-                Spacer()
-
-                Button {
-                    showingTitleEditor = true
-                } label: {
-                    Image(systemName: "pencil")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                Text("\(availableEvents.count)")
-                    .font(.caption)
+                Text(customTitle.isEmpty ? widgetType.defaultTitle : customTitle)
+                    .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(.secondary)
-            }
+                    .lineLimit(2)
 
-            Text(customTitle.isEmpty ? widgetType.defaultTitle : customTitle)
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(.secondary)
-                .lineLimit(2)
+                Spacer()
+            }
 
             Spacer()
 
@@ -290,17 +261,17 @@ struct WidgetTypeCard: View {
         .background(Color(.systemGray6))
         .cornerRadius(12)
         .onAppear {
-            customTitle = WidgetDataManager.shared.getWidgetTitle(for: widgetType)
+            loadTitle()
         }
-        .sheet(isPresented: $showingTitleEditor) {
-            TitleEditorView(
-                currentTitle: customTitle.isEmpty ? widgetType.defaultTitle : customTitle,
-                widgetType: widgetType
-            ) { newTitle in
-                customTitle = newTitle
-                WidgetDataManager.shared.setWidgetTitle(newTitle, for: widgetType)
-            }
+        .onChange(of: refreshTrigger) { _, _ in
+            loadTitle()
         }
+    }
+
+    @MainActor
+    private func loadTitle() {
+        let userId = UserSession.shared.userProfile?.userId ?? ""
+        customTitle = WidgetDataManager.shared.getWidgetTitle(for: widgetType, userId: userId)
     }
 }
 
@@ -346,8 +317,8 @@ struct WidgetEventSelectionView: View {
                 }
             }
             .onAppear {
-                // Start with no events selected
-                selectedEvents = []
+                // Load previously selected events from widget configuration
+                loadSelectedEvents()
             }
         }
     }
@@ -428,6 +399,28 @@ struct WidgetEventSelectionView: View {
 
     private func getSampleKeywords() -> String {
         return "any"
+    }
+
+    private func loadSelectedEvents() {
+        // Load the current widget configuration to get previously selected events
+        Task { @MainActor in
+            let userId = UserSession.shared.userProfile?.userId ?? ""
+            let fileName = widgetType.fileName(for: userId)
+            loadSelectedEventsWithFileName(fileName)
+        }
+    }
+
+    private func loadSelectedEventsWithFileName(_ fileName: String) {
+        guard let sharedContainer = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.lovely.app"),
+              let data = try? Data(contentsOf: sharedContainer.appendingPathComponent(fileName)),
+              let configuration = try? JSONDecoder().decode(WidgetConfigurationData.self, from: data) else {
+            // No previous configuration, start with empty selection
+            selectedEvents = []
+            return
+        }
+
+        // Set selected events to match the previously configured event IDs
+        selectedEvents = Set(configuration.selectedEventIds)
     }
 }
 
@@ -609,44 +602,115 @@ struct WidgetPreviewView: View {
     }
 }
 
-struct TitleEditorView: View {
-    let currentTitle: String
-    let widgetType: WidgetType
-    let onSave: (String) -> Void
+// MARK: - Comprehensive Widget Edit View
 
-    @State private var editedTitle: String = ""
+struct WidgetEditView: View {
+    let widgetType: WidgetType
+    let availableEvents: [CalendarEvent]
+    let onComplete: () -> Void
+
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var userSession = UserSession.shared
+
+    // Widget configuration state
+    @State private var customTitle: String = ""
+    @State private var selectedEvents: Set<String> = []
+
+    init(widgetType: WidgetType, availableEvents: [CalendarEvent], onComplete: @escaping () -> Void) {
+        self.widgetType = widgetType
+        self.availableEvents = availableEvents
+        self.onComplete = onComplete
+    }
+
+    private var filteredEvents: [CalendarEvent] {
+        availableEvents
+    }
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Widget Title")
+            VStack(spacing: 0) {
+                // Widget Preview Section
+                VStack(spacing: 16) {
+                    Text("Widget Preview")
                         .font(.headline)
+                        .foregroundColor(.secondary)
 
-                    TextField("Enter widget title", text: $editedTitle)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.body)
-                }
+                    // Mock widget preview
+                    VStack(spacing: 12) {
+                        HStack {
+                            Text(customTitle.isEmpty ? widgetType.defaultTitle : customTitle)
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.secondary)
 
-                HStack {
-                    Image(systemName: widgetType.icon)
-                        .font(.title2)
-                        .foregroundColor(widgetType.color)
+                            Spacer()
+                        }
 
-                    Text(editedTitle.isEmpty ? "Widget Title" : editedTitle)
-                        .font(.headline)
-                        .fontWeight(.semibold)
-
-                    Spacer()
+                        HStack {
+                            Text("\(selectedEvents.count) event\(selectedEvents.count == 1 ? "" : "s") selected")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(12)
                 }
                 .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
+                .background(Color(.systemGray5).opacity(0.3))
 
-                Spacer()
+                // Configuration Form
+                Form {
+                    Section("Widget Settings") {
+                        // Title editing
+                        HStack {
+                            Text("Title")
+                            TextField(widgetType.defaultTitle, text: $customTitle)
+                                .multilineTextAlignment(.trailing)
+                        }
+                    }
+
+                    Section("Select Events") {
+                        if filteredEvents.isEmpty {
+                            VStack(spacing: 8) {
+                                Image(systemName: "photo.stack")
+                                    .font(.title2)
+                                    .foregroundColor(.secondary)
+
+                                Text("No events with photos")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 20)
+                        } else {
+                            ForEach(filteredEvents) { event in
+                                EventSelectionRow(
+                                    event: event,
+                                    isSelected: selectedEvents.contains(event.id ?? "")
+                                ) {
+                                    toggleEventSelection(event)
+                                }
+                            }
+                        }
+                    }
+
+                    if !selectedEvents.isEmpty {
+                        Section {
+                            Button("Select All") {
+                                selectedEvents = Set(filteredEvents.compactMap { $0.id })
+                            }
+                            .foregroundColor(widgetType.color)
+
+                            Button("Deselect All") {
+                                selectedEvents = []
+                            }
+                            .foregroundColor(.secondary)
+                        }
+                    }
+                }
             }
-            .padding()
             .navigationTitle("Edit Widget")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -658,15 +722,71 @@ struct TitleEditorView: View {
 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
-                        onSave(editedTitle.isEmpty ? widgetType.defaultTitle : editedTitle)
-                        dismiss()
+                        saveWidgetConfiguration()
                     }
-                    .fontWeight(.semibold)
+                    .disabled(selectedEvents.isEmpty)
                 }
             }
         }
         .onAppear {
-            editedTitle = currentTitle == widgetType.defaultTitle ? "" : currentTitle
+            loadCurrentConfiguration()
         }
     }
+
+    private func loadCurrentConfiguration() {
+        Task { @MainActor in
+            let userId = UserSession.shared.userProfile?.userId ?? ""
+            let fileName = widgetType.fileName(for: userId)
+            loadConfigurationWithFileName(fileName)
+        }
+    }
+
+    private func loadConfigurationWithFileName(_ fileName: String) {
+        // Load existing widget title and icon
+        let userId = userSession.userProfile?.userId ?? ""
+        customTitle = WidgetDataManager.shared.getWidgetTitle(for: widgetType, userId: userId)
+        if customTitle == widgetType.defaultTitle {
+            customTitle = ""
+        }
+
+
+        // Load previously selected events
+        guard let sharedContainer = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.lovely.app"),
+              let data = try? Data(contentsOf: sharedContainer.appendingPathComponent(fileName)),
+              let configuration = try? JSONDecoder().decode(WidgetConfigurationData.self, from: data) else {
+            selectedEvents = []
+            return
+        }
+
+        selectedEvents = Set(configuration.selectedEventIds)
+    }
+
+    private func toggleEventSelection(_ event: CalendarEvent) {
+        guard let eventId = event.id else { return }
+
+        if selectedEvents.contains(eventId) {
+            selectedEvents.remove(eventId)
+        } else {
+            selectedEvents.insert(eventId)
+        }
+    }
+
+    private func saveWidgetConfiguration() {
+        let eventsToUse = filteredEvents.filter { event in
+            selectedEvents.contains(event.id ?? "")
+        }
+
+        let userId = userSession.userProfile?.userId ?? ""
+
+        // Save title
+        let finalTitle = customTitle.isEmpty ? widgetType.defaultTitle : customTitle
+        WidgetDataManager.shared.setWidgetTitle(finalTitle, for: widgetType, userId: userId)
+
+
+        // Save widget configuration
+        WidgetDataManager.shared.updateWidgetConfiguration(selectedEvents: eventsToUse, for: widgetType, userId: userId)
+
+        onComplete()
+    }
 }
+

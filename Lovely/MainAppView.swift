@@ -32,7 +32,7 @@ struct MainAppView: View {
         // ✅ Single parent NavigationStack so large titles/insets work
         NavigationStack {
             TabView(selection: $selectedTab) {
-                // ✅ Each page wrapped in PageContainer to guarantee real size
+                // ✅ Each page wrapped in PageContainer
                 PageContainer {
                     WidgetsView(authManager: authManager, userManager: userManager)
                 }
@@ -46,7 +46,7 @@ struct MainAppView: View {
 
                 PageContainer {
                     ProfileView(authManager: authManager, userManager: userManager)
-                        .environmentObject(deepLinkManager) // keep if Profile needs it
+                        .environmentObject(deepLinkManager)
                 }
                 .tag(AppTab.profile)
             }
@@ -86,6 +86,7 @@ private struct PageContainer<Content: View>: View {
             .background(Color(.systemBackground)) // matches app background
     }
 }
+
 
 private struct CustomTabBar: View {
     @Binding var selected: AppTab
