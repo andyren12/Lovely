@@ -27,6 +27,7 @@
 		FB082E4E2E7550A8003CF621 /* UserManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB082E4A2E7550A7003CF621 /* UserManager.swift */; };
 		FB082E4F2E7550A8003CF621 /* UserProfileSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB082E4B2E7550A7003CF621 /* UserProfileSetupView.swift */; };
 		FB082E542E775800003CF621 /* PhoneAuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB082E552E775800003CF621 /* PhoneAuthView.swift */; };
+		FB1588442E84D7380076DA74 /* KeyboardDismissExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB1588432E84D7380076DA74 /* KeyboardDismissExtension.swift */; };
 		FB37BE512E7763DB005BEF13 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FB37BE502E7763DB005BEF13 /* GoogleService-Info.plist */; };
 		FB37BE532E776500005BEF13 /* BucketListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE522E776500005BEF13 /* BucketListView.swift */; };
 		FB37BE532E788EDF005BEF13 /* UserSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE522E788EDE005BEF13 /* UserSession.swift */; };
@@ -118,6 +119,7 @@
 		FB082E4A2E7550A7003CF621 /* UserManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserManager.swift; sourceTree = "<group>"; };
 		FB082E4B2E7550A7003CF621 /* UserProfileSetupView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserProfileSetupView.swift; sourceTree = "<group>"; };
 		FB082E552E775800003CF621 /* PhoneAuthView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhoneAuthView.swift; sourceTree = "<group>"; };
+		FB1588432E84D7380076DA74 /* KeyboardDismissExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KeyboardDismissExtension.swift; sourceTree = "<group>"; };
 		FB37BE502E7763DB005BEF13 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "../../../../Downloads/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		FB37BE522E776500005BEF13 /* BucketListView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BucketListView.swift; sourceTree = "<group>"; };
 		FB37BE522E788EDE005BEF13 /* UserSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserSession.swift; sourceTree = "<group>"; };
@@ -216,6 +218,7 @@
 		FB082E082E753332003CF621 /* Lovely */ = {
 			isa = PBXGroup;
 			children = (
+				FB1588432E84D7380076DA74 /* KeyboardDismissExtension.swift */,
 				FB37BE912E7C8CD7005BEF13 /* WidgetDataManager.swift */,
 				FB37BE6F2E7C881C005BEF13 /* CalendarBucketListView.swift */,
 				FB37BE702E7C881C005BEF13 /* WidgetsView.swift */,
@@ -495,6 +498,7 @@
 				FB082E3D2E753500003CF621 /* AuthManager.swift in Sources */,
 				FB082E4C2E7550A8003CF621 /* Models.swift in Sources */,
 				FB082E3F2E753501003CF621 /* AuthView.swift in Sources */,
+				FB1588442E84D7380076DA74 /* KeyboardDismissExtension.swift in Sources */,
 				FB082E452E753504003CF621 /* MainAppView.swift in Sources */,
 				FB37BE592E7B4539005BEF13 /* EventDetailView.swift in Sources */,
 				FB37BE6E2E7C679E005BEF13 /* UserSetupView.swift in Sources */,

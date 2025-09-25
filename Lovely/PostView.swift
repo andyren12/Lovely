@@ -11,7 +11,6 @@ struct PostView: View {
     @State private var currentImageIndex = 0
     @State private var newComment = ""
     @State private var isAddingComment = false
-    @State private var showingComments = false
 
     private let maxComments = 50
 
@@ -33,11 +32,10 @@ struct PostView: View {
                     }
                 }
 
-                if showingComments {
-                    commentInputView
-                }
+                commentInputView
             }
             .navigationBarTitleDisplayMode(.inline)
+            .dismissKeyboard()
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Close") {
@@ -162,7 +160,7 @@ struct PostView: View {
                         .font(.title2)
                         .fontWeight(.bold)
 
-                    Text(event.date.formatted(date: .complete, time: event.isAllDay ? .omitted : .shortened))
+                    Text(event.date.formatted(date: .complete, time: .omitted))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -209,14 +207,6 @@ struct PostView: View {
                 }
 
                 Spacer()
-
-                Button(action: {
-                    showingComments.toggle()
-                }) {
-                    Image(systemName: showingComments ? "bubble.left.fill" : "bubble.left")
-                        .font(.title3)
-                        .foregroundColor(.purple)
-                }
             }
         }
         .padding()
@@ -384,6 +374,7 @@ struct PostView: View {
             }
         }
     }
+
 }
 
 struct CommentRowView: View {
@@ -399,7 +390,7 @@ struct CommentRowView: View {
 
                 Spacer()
 
-                Text(comment.createdAt.formatted(.relative(presentation: .numeric)))
+                Text(timeAgoString(from: comment.createdAt))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -410,5 +401,18 @@ struct CommentRowView: View {
                 .lineLimit(nil)
         }
         .padding(.vertical, 4)
+    }
+
+    private func timeAgoString(from date: Date) -> String {
+        let now = Date()
+        let timeInterval = now.timeIntervalSince(date)
+
+        // If less than 60 seconds ago, show "just now"
+        if timeInterval < 60 {
+            return "just now"
+        }
+
+        // Otherwise use the standard relative formatting
+        return date.formatted(.relative(presentation: .numeric))
     }
 }

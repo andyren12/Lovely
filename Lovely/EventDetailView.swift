@@ -90,6 +90,7 @@ struct EventDetailView: View {
                 }
             }
         }
+        .dismissKeyboard()
         .onAppear {
             loadPhotos()
             Task {
@@ -114,7 +115,7 @@ struct EventDetailView: View {
                     .foregroundColor(.purple)
                     .frame(width: 20)
 
-                Text(event.date.formatted(date: .complete, time: event.isAllDay ? .omitted : .shortened))
+                Text(event.date.formatted(date: .complete, time: .omitted))
                     .font(.subheadline)
 
                 Spacer()

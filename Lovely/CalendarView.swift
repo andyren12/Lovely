@@ -138,6 +138,7 @@ struct CalendarView: View {
         .sheet(isPresented: $showingDatePicker) {
             DatePickerSheet(selectedDate: $selectedDate)
         }
+        .dismissKeyboard()
         .sheet(isPresented: $showingAddEvent) {
             AddEventView(selectedDate: selectedDate, calendarManager: calendarManager) { event in
                 Task {
@@ -449,7 +450,7 @@ struct EventRow: View {
                         .lineLimit(3)
                 }
 
-                Text(event.isAllDay ? "All day" : event.date.formatted(date: .omitted, time: .shortened))
+                Text("All day")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

@@ -102,6 +102,7 @@ struct ProfileView: View {
                 }
             }
         }
+        .dismissKeyboard()
         .onAppear {
             loadEvents()
             initializeCoupleName()

@@ -181,9 +181,10 @@ struct PhotoTimelineProvider: TimelineProvider {
             )
             entries.append(entry)
         } else {
-            // For now, just show the first photo (single photo display)
             // Create timeline entries cycling through photos every 20 minutes
-            for i in 0..<72 { // 24 hours worth of 20-minute intervals
+            // Generate entries for the next 4 hours (12 intervals)
+            let totalIntervals = 12 // 4 hours * 3 intervals per hour
+            for i in 0..<totalIntervals {
                 let entryDate = Calendar.current.date(byAdding: .minute, value: i * 20, to: currentDate)!
                 let photoIndex = i % widgetData.photos.count
 
@@ -197,7 +198,9 @@ struct PhotoTimelineProvider: TimelineProvider {
             }
         }
 
-        let timeline = Timeline(entries: entries, policy: .atEnd)
+        // Refresh timeline every 4 hours to ensure cycling works properly
+        let refreshDate = Calendar.current.date(byAdding: .hour, value: 4, to: currentDate)!
+        let timeline = Timeline(entries: entries, policy: .after(refreshDate))
         completion(timeline)
     }
 }
