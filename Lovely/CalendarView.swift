@@ -449,10 +449,6 @@ struct EventRow: View {
                         .foregroundColor(.secondary)
                         .lineLimit(3)
                 }
-
-                Text("All day")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
             }
 
             Spacer()
