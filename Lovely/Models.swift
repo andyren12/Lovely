@@ -38,6 +38,7 @@ struct Couple: Codable, Identifiable {
     var bucketListId: String?
     var anniversary: Date?
     var profilePictureURL: String?
+    var coupleName: String?
     var createdAt: Date
     var updatedAt: Date
 
@@ -49,6 +50,7 @@ struct Couple: Codable, Identifiable {
         self.bucketListId = nil
         self.anniversary = nil
         self.profilePictureURL = nil
+        self.coupleName = nil
         self.createdAt = Date()
         self.updatedAt = Date()
     }

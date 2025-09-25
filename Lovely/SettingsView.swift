@@ -12,98 +12,16 @@ struct SettingsView: View {
     @State private var hideEventsWithoutPhotos = false
     @State private var originalHideEventsWithoutPhotos = false
     @State private var hasAppeared = false
+    @State private var showingAccountInfo = false
 
     var body: some View {
         NavigationView {
             List {
-                Section("Account Information") {
-                    if let user = authManager.user {
-                        HStack {
-                            Text("Name")
-                            Spacer()
-                            Text(userSession.userProfile?.fullName ?? "Not set")
-                                .foregroundColor(.secondary)
-                        }
-
-                        HStack {
-                            Text("Phone Number")
-                            Spacer()
-                            Text(user.phoneNumber ?? "No phone number")
-                                .foregroundColor(.secondary)
-                        }
-
-                        if let userProfile = userSession.userProfile {
-                            HStack {
-                                Text("Birthday")
-                                Spacer()
-                                Text(userProfile.birthday.formatted(date: .abbreviated, time: .omitted))
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-
-                        HStack {
-                            Text("User ID")
-                            Spacer()
-                            Text(user.uid)
-                                .font(.system(.caption, design: .monospaced))
-                                .foregroundColor(.secondary)
-                        }
-
-                        HStack {
-                            Text("Account Created")
-                            Spacer()
-                            if let creationDate = user.metadata.creationDate {
-                                Text(creationDate.formatted(date: .abbreviated, time: .omitted))
-                                    .foregroundColor(.secondary)
-                            } else {
-                                Text("Unknown")
-                                    .foregroundColor(.secondary)
-                            }
-                        }
+                Section("Account") {
+                    Button("Account Info") {
+                        showingAccountInfo = true
                     }
-                }
-
-                if userSession.isInCouple, let couple = userSession.couple {
-                    Section("Couple Information") {
-                        HStack {
-                            Text("Invite Code")
-                            Spacer()
-                            Text(couple.inviteCode)
-                                .font(.system(.caption, design: .monospaced))
-                                .foregroundColor(.secondary)
-                        }
-
-                        HStack {
-                            Text("Couple ID")
-                            Spacer()
-                            Text(couple.id ?? "Unknown")
-                                .font(.system(.caption, design: .monospaced))
-                                .foregroundColor(.secondary)
-                        }
-
-                        if let anniversary = couple.anniversary {
-                            HStack {
-                                Text("Anniversary")
-                                Spacer()
-                                Text(anniversary.formatted(date: .abbreviated, time: .omitted))
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-
-                        HStack {
-                            Text("Profile Picture")
-                            Spacer()
-                            Text(couple.hasProfilePicture ? "Set" : "Not set")
-                                .foregroundColor(.secondary)
-                        }
-
-                        HStack {
-                            Text("Relationship Started")
-                            Spacer()
-                            Text(couple.createdAt.formatted(date: .abbreviated, time: .omitted))
-                                .foregroundColor(.secondary)
-                        }
-                    }
+                    .foregroundColor(.primary)
                 }
 
                 Section("Preferences") {
@@ -143,6 +61,9 @@ struct SettingsView: View {
                 Button("OK") { }
             } message: {
                 Text(alertMessage)
+            }
+            .sheet(isPresented: $showingAccountInfo) {
+                AccountInfoView(authManager: authManager, userManager: userManager)
             }
         }
         .onAppear {
@@ -219,6 +140,69 @@ struct SettingsView: View {
             } catch {
                 alertMessage = error.localizedDescription
                 showAlert = true
+            }
+        }
+    }
+}
+
+// MARK: - Account Info View
+struct AccountInfoView: View {
+    @ObservedObject var authManager: AuthManager
+    @ObservedObject var userManager: UserManager
+    @ObservedObject private var userSession = UserSession.shared
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationView {
+            List {
+                Section("Account Information") {
+                    if let user = authManager.user {
+                        HStack {
+                            Text("Name")
+                            Spacer()
+                            Text(userSession.userProfile?.fullName ?? "Not set")
+                                .foregroundColor(.secondary)
+                        }
+
+                        HStack {
+                            Text("Phone Number")
+                            Spacer()
+                            Text(user.phoneNumber ?? "No phone number")
+                                .foregroundColor(.secondary)
+                        }
+
+                        if let userProfile = userSession.userProfile {
+                            HStack {
+                                Text("Birthday")
+                                Spacer()
+                                Text(userProfile.birthday.formatted(date: .abbreviated, time: .omitted))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+
+                if userSession.isInCouple, let couple = userSession.couple {
+                    Section("Couple Information") {
+                        if let anniversary = couple.anniversary {
+                            HStack {
+                                Text("Anniversary")
+                                Spacer()
+                                Text(anniversary.formatted(date: .abbreviated, time: .omitted))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Account")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
             }
         }
     }

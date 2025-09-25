@@ -12,6 +12,8 @@ struct ProfileView: View {
     @State private var alertMessage = ""
     @State private var eventImages: [String: UIImage] = [:]
     @State private var selectedEvent: CalendarEvent?
+    @State private var editingCoupleName = false
+    @State private var coupleName = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,6 +26,17 @@ struct ProfileView: View {
         .navigationBarHidden(true)
         .sheet(isPresented: $showingSettings) {
             SettingsView(authManager: authManager, userManager: userManager)
+        }
+        .alert("Edit Couple Name", isPresented: $editingCoupleName) {
+            TextField("Couple Name", text: $coupleName)
+            Button("Cancel", role: .cancel) {
+                coupleName = displayCoupleName()
+            }
+            Button("Save") {
+                saveCoupleName()
+            }
+        } message: {
+            Text("Enter a custom name for your couple")
         }
         .alert("Error", isPresented: $showAlert) {
             Button("OK") { }
@@ -91,6 +104,7 @@ struct ProfileView: View {
         }
         .onAppear {
             loadEvents()
+            initializeCoupleName()
         }
         .sheet(item: $selectedEvent) { event in
             if let eventIndex = filteredEvents.firstIndex(where: { $0.id == event.id }) {
@@ -106,6 +120,7 @@ struct ProfileView: View {
             // Settings Button Row
             HStack {
                 Spacer()
+
                 Button {
                     showingSettings = true
                 } label: {
@@ -121,20 +136,18 @@ struct ProfileView: View {
                 userManager: userManager
             )
 
-            // Couple Names
+            // Couple Names (Editable)
             VStack(spacing: 4) {
-                if let userFirstName = userSession.currentUserFirstName,
-                   let partnerFirstName = userSession.partnerFirstName {
-                    Text("\(userFirstName) + \(partnerFirstName)")
+                Button {
+                    editingCoupleName = true
+                } label: {
+                    Text(displayCoupleName())
                         .font(.title2)
                         .fontWeight(.bold)
                         .multilineTextAlignment(.center)
-                } else {
-                    Text("Loading...")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.primary)
                 }
+                .disabled(userSession.currentUserFirstName == nil || userSession.partnerFirstName == nil)
             }
 
             // Relationship Duration and Dates Stat
@@ -245,6 +258,41 @@ struct ProfileView: View {
         .background(Color(.systemGray6))
         .cornerRadius(16)
         .padding(.horizontal)
+    }
+
+    // MARK: - Couple Name Helpers
+
+    private func displayCoupleName() -> String {
+        if let customName = userSession.couple?.coupleName, !customName.isEmpty {
+            return customName
+        }
+
+        if let userFirstName = userSession.currentUserFirstName,
+           let partnerFirstName = userSession.partnerFirstName {
+            return "\(userFirstName) + \(partnerFirstName)"
+        }
+
+        return "Loading..."
+    }
+
+    private func initializeCoupleName() {
+        coupleName = displayCoupleName()
+    }
+
+    private func saveCoupleName() {
+        guard let coupleId = userSession.couple?.id else { return }
+
+        Task {
+            do {
+                try await userManager.updateCoupleName(coupleId: coupleId, coupleName: coupleName)
+                print("✅ Couple name updated successfully")
+            } catch {
+                await MainActor.run {
+                    alertMessage = "Failed to update couple name: \(error.localizedDescription)"
+                    showAlert = true
+                }
+            }
+        }
     }
 }
 

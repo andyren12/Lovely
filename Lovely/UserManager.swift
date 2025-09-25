@@ -292,6 +292,35 @@ class UserManager: ObservableObject {
         isLoading = false
     }
 
+    func updateCoupleName(coupleId: String, coupleName: String) async throws {
+        guard let couple = currentCouple else {
+            throw NSError(domain: "UserManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Couple data not loaded"])
+        }
+
+        isLoading = true
+
+        do {
+            // Update couple document with couple name
+            try await db.collection("couples").document(coupleId).updateData([
+                "coupleName": coupleName,
+                "updatedAt": Date()
+            ])
+
+            // Update local state
+            var updatedCouple = couple
+            updatedCouple.coupleName = coupleName
+            updatedCouple.updatedAt = Date()
+            currentCouple = updatedCouple
+
+            UserSession.shared.updateCouple(updatedCouple)
+
+            isLoading = false
+        } catch {
+            isLoading = false
+            throw error
+        }
+    }
+
     func clearUserData() {
         currentUserProfile = nil
         currentCouple = nil
