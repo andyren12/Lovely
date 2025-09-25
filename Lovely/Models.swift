@@ -39,6 +39,8 @@ struct Couple: Codable, Identifiable {
     var anniversary: Date?
     var profilePictureURL: String?
     var coupleName: String?
+    var habitIds: [String]
+    var maxHabits: Int
     var createdAt: Date
     var updatedAt: Date
 
@@ -51,9 +53,12 @@ struct Couple: Codable, Identifiable {
         self.anniversary = nil
         self.profilePictureURL = nil
         self.coupleName = nil
+        self.habitIds = []
+        self.maxHabits = 5 // Free tier limit
         self.createdAt = Date()
         self.updatedAt = Date()
     }
+
 
     var isComplete: Bool {
         return user2Id != nil
@@ -103,16 +108,6 @@ struct BucketListItem: Codable, Identifiable {
         self.completedAt = completedAt
     }
 
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeIfPresent(String.self, forKey: .id) ?? UUID().uuidString
-        self.title = try container.decode(String.self, forKey: .title)
-        self.description = try container.decode(String.self, forKey: .description)
-        self.isCompleted = try container.decode(Bool.self, forKey: .isCompleted)
-        self.photoURLs = try container.decodeIfPresent([String].self, forKey: .photoURLs) ?? []
-        self.createdAt = try container.decode(Date.self, forKey: .createdAt)
-        self.completedAt = try container.decodeIfPresent(Date.self, forKey: .completedAt)
-    }
 }
 
 struct CalendarEvent: Codable, Identifiable {
@@ -140,22 +135,6 @@ struct CalendarEvent: Codable, Identifiable {
         self.bucketListItemId = bucketListItemId
     }
 
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeIfPresent(String.self, forKey: .id)
-        self.title = try container.decode(String.self, forKey: .title)
-        self.description = try container.decode(String.self, forKey: .description)
-        self.date = try container.decode(Date.self, forKey: .date)
-        self.isAllDay = try container.decode(Bool.self, forKey: .isAllDay)
-        self.createdAt = try container.decode(Date.self, forKey: .createdAt)
-        self.coupleId = try container.decodeIfPresent(String.self, forKey: .coupleId)
-        // Handle missing photoURLs field for existing events
-        self.photoURLs = try container.decodeIfPresent([String].self, forKey: .photoURLs) ?? []
-        // Handle missing comments field for existing events
-        self.comments = try container.decodeIfPresent([Comment].self, forKey: .comments) ?? []
-        // Handle missing bucketListItemId field for existing events
-        self.bucketListItemId = try container.decodeIfPresent(String.self, forKey: .bucketListItemId)
-    }
 }
 
 struct Comment: Codable, Identifiable {
@@ -173,14 +152,6 @@ struct Comment: Codable, Identifiable {
         self.createdAt = Date()
     }
 
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeIfPresent(String.self, forKey: .id) ?? UUID().uuidString
-        self.userId = try container.decode(String.self, forKey: .userId)
-        self.userName = try container.decode(String.self, forKey: .userName)
-        self.text = try container.decode(String.self, forKey: .text)
-        self.createdAt = try container.decode(Date.self, forKey: .createdAt)
-    }
 }
 
 struct InviteCode {
@@ -201,5 +172,98 @@ struct UserSettings: Codable {
         self.hideEventsWithoutPhotos = hideEventsWithoutPhotos
         self.createdAt = Date()
         self.updatedAt = Date()
+    }
+}
+
+// MARK: - Habit Tracker Models
+
+struct Habit: Codable, Identifiable {
+    var id: String?
+    var title: String
+    var description: String
+    var coupleId: String
+    var createdAt: Date
+    var updatedAt: Date
+    var isActive: Bool
+
+    init(title: String, description: String, coupleId: String) {
+        self.id = nil
+        self.title = title
+        self.description = description
+        self.coupleId = coupleId
+        self.createdAt = Date()
+        self.updatedAt = Date()
+        self.isActive = true
+    }
+}
+
+
+struct DailyHabitStatus {
+    let habit: Habit
+    let date: Date
+    let user1Completed: Bool
+    let user2Completed: Bool
+    let user1CompletedAt: Date?
+    let user2CompletedAt: Date?
+
+    var isBothCompleted: Bool {
+        return user1Completed && user2Completed
+    }
+
+    var completionStatus: String {
+        if isBothCompleted {
+            return "Both completed"
+        } else if user1Completed || user2Completed {
+            return "One completed"
+        } else {
+            return "Not completed"
+        }
+    }
+}
+
+// MARK: - Daily Completion Models
+
+struct DailyHabitCompletions: Codable, Identifiable {
+    var id: String? // Will be "coupleId_yyyy-MM-dd"
+    var coupleId: String
+    var date: Date // Normalized to start of day
+    var habitCompletions: [String: UserCompletions] // habitId -> UserCompletions
+    var createdAt: Date
+    var updatedAt: Date
+
+    init(coupleId: String, date: Date) {
+        self.id = "\(coupleId)_\(Self.dateString(from: date))"
+        self.coupleId = coupleId
+        self.date = Calendar.current.startOfDay(for: date)
+        self.habitCompletions = [:]
+        self.createdAt = Date()
+        self.updatedAt = Date()
+    }
+
+    static func dateString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+}
+
+struct UserCompletions: Codable {
+    var user1Completed: Bool
+    var user2Completed: Bool
+    var user1CompletedAt: Date?
+    var user2CompletedAt: Date?
+
+    init() {
+        self.user1Completed = false
+        self.user2Completed = false
+        self.user1CompletedAt = nil
+        self.user2CompletedAt = nil
+    }
+
+    init(user1Completed: Bool, user2Completed: Bool, user1CompletedAt: Date?, user2CompletedAt: Date?) {
+        self.user1Completed = user1Completed
+        self.user2Completed = user2Completed
+        self.user1CompletedAt = user1CompletedAt
+        self.user2CompletedAt = user2CompletedAt
     }
 }

@@ -28,6 +28,9 @@
 		FB082E4F2E7550A8003CF621 /* UserProfileSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB082E4B2E7550A7003CF621 /* UserProfileSetupView.swift */; };
 		FB082E542E775800003CF621 /* PhoneAuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB082E552E775800003CF621 /* PhoneAuthView.swift */; };
 		FB1588442E84D7380076DA74 /* KeyboardDismissExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB1588432E84D7380076DA74 /* KeyboardDismissExtension.swift */; };
+		FB1588482E84DC480076DA74 /* HabitsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB1588452E84DC480076DA74 /* HabitsView.swift */; };
+		FB1588492E84DC480076DA74 /* CreateHabitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB1588462E84DC480076DA74 /* CreateHabitView.swift */; };
+		FB15884A2E84DC480076DA74 /* HabitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB1588472E84DC480076DA74 /* HabitManager.swift */; };
 		FB37BE512E7763DB005BEF13 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FB37BE502E7763DB005BEF13 /* GoogleService-Info.plist */; };
 		FB37BE532E776500005BEF13 /* BucketListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE522E776500005BEF13 /* BucketListView.swift */; };
 		FB37BE532E788EDF005BEF13 /* UserSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37BE522E788EDE005BEF13 /* UserSession.swift */; };
@@ -120,6 +123,9 @@
 		FB082E4B2E7550A7003CF621 /* UserProfileSetupView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserProfileSetupView.swift; sourceTree = "<group>"; };
 		FB082E552E775800003CF621 /* PhoneAuthView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhoneAuthView.swift; sourceTree = "<group>"; };
 		FB1588432E84D7380076DA74 /* KeyboardDismissExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KeyboardDismissExtension.swift; sourceTree = "<group>"; };
+		FB1588452E84DC480076DA74 /* HabitsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HabitsView.swift; sourceTree = "<group>"; };
+		FB1588462E84DC480076DA74 /* CreateHabitView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CreateHabitView.swift; sourceTree = "<group>"; };
+		FB1588472E84DC480076DA74 /* HabitManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HabitManager.swift; sourceTree = "<group>"; };
 		FB37BE502E7763DB005BEF13 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "../../../../Downloads/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		FB37BE522E776500005BEF13 /* BucketListView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BucketListView.swift; sourceTree = "<group>"; };
 		FB37BE522E788EDE005BEF13 /* UserSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserSession.swift; sourceTree = "<group>"; };
@@ -218,6 +224,9 @@
 		FB082E082E753332003CF621 /* Lovely */ = {
 			isa = PBXGroup;
 			children = (
+				FB1588462E84DC480076DA74 /* CreateHabitView.swift */,
+				FB1588472E84DC480076DA74 /* HabitManager.swift */,
+				FB1588452E84DC480076DA74 /* HabitsView.swift */,
 				FB1588432E84D7380076DA74 /* KeyboardDismissExtension.swift */,
 				FB37BE912E7C8CD7005BEF13 /* WidgetDataManager.swift */,
 				FB37BE6F2E7C881C005BEF13 /* CalendarBucketListView.swift */,
@@ -479,12 +488,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				FB37BE622E7B87F2005BEF13 /* AnniversarySetupView.swift in Sources */,
+				FB1588482E84DC480076DA74 /* HabitsView.swift in Sources */,
 				FB082E0C2E753332003CF621 /* ContentView.swift in Sources */,
 				FB37BE5E2E7B5EEF005BEF13 /* S3Manager.swift in Sources */,
 				FB082E0A2E753332003CF621 /* LovelyApp.swift in Sources */,
 				FB082E542E775800003CF621 /* PhoneAuthView.swift in Sources */,
 				FB37BE532E776500005BEF13 /* BucketListView.swift in Sources */,
 				FB37BE552E776501005BEF13 /* CalendarView.swift in Sources */,
+				FB15884A2E84DC480076DA74 /* HabitManager.swift in Sources */,
 				FB37BE572E776600005BEF13 /* BucketListManager.swift in Sources */,
 				FB37BE722E7C881C005BEF13 /* WidgetsView.swift in Sources */,
 				FB37BE532E788EDF005BEF13 /* UserSession.swift in Sources */,
@@ -501,6 +512,7 @@
 				FB1588442E84D7380076DA74 /* KeyboardDismissExtension.swift in Sources */,
 				FB082E452E753504003CF621 /* MainAppView.swift in Sources */,
 				FB37BE592E7B4539005BEF13 /* EventDetailView.swift in Sources */,
+				FB1588492E84DC480076DA74 /* CreateHabitView.swift in Sources */,
 				FB37BE6E2E7C679E005BEF13 /* UserSetupView.swift in Sources */,
 				FB37BE6A2E7B9DCB005BEF13 /* SMSManager.swift in Sources */,
 				FB082E472E753505003CF621 /* ProfileView.swift in Sources */,

@@ -7,6 +7,7 @@ struct CalendarBucketListView: View {
     @State private var selectedView: ViewType = .calendar
     @State private var showingAddEvent = false
     @State private var showingAddBucketItem = false
+    @State private var showingWidgets = false
     @StateObject private var userSession = UserSession.shared
     @StateObject private var calendarManager = CalendarManager()
     @StateObject private var bucketListManager = BucketListManager()
@@ -29,9 +30,17 @@ struct CalendarBucketListView: View {
         VStack(spacing: 0) {
             // Dropdown Header with Plus Button
             HStack {
-                // Left spacer for balance
-                Spacer()
+                // Widgets button on left
+                Button {
+                    showingWidgets = true
+                } label: {
+                    Image(systemName: "rectangle.3.group")
+                        .font(.title3)
+                        .foregroundColor(.primary)
+                }
                 
+                Spacer()
+
                 // Centered dropdown menu
                 Menu {
                     ForEach(ViewType.allCases, id: \.self) { viewType in
@@ -52,8 +61,7 @@ struct CalendarBucketListView: View {
                     }
                     .foregroundColor(.primary)
                 }
-                
-                // Right spacer and plus button
+
                 Spacer()
                 
                 if selectedView == .calendar || selectedView == .bucketList {
@@ -120,6 +128,9 @@ struct CalendarBucketListView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $showingWidgets) {
+            WidgetsView(authManager: authManager, userManager: userManager)
         }
     }
 }

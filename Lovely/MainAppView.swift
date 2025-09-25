@@ -2,11 +2,11 @@ import SwiftUI
 import UIKit
 
 private enum AppTab: Int, CaseIterable {
-    case widgets = 0, calendar = 1, profile = 2
+    case habits = 0, calendar = 1, profile = 2
 
     var title: String {
         switch self {
-        case .widgets:  return "Widgets"
+        case .habits:   return "Habits"
         case .calendar: return "Calendar"
         case .profile:  return "Profile"
         }
@@ -14,7 +14,7 @@ private enum AppTab: Int, CaseIterable {
 
     var systemImage: String {
         switch self {
-        case .widgets:  return "rectangle.3.group"
+        case .habits:   return "checkmark.circle"
         case .calendar: return "calendar"
         case .profile:  return "person.circle"
         }
@@ -34,9 +34,10 @@ struct MainAppView: View {
             TabView(selection: $selectedTab) {
                 // ✅ Each page wrapped in PageContainer
                 PageContainer {
-                    WidgetsView(authManager: authManager, userManager: userManager)
+                    HabitsView()
+                        .environmentObject(deepLinkManager)
                 }
-                .tag(AppTab.widgets)
+                .tag(AppTab.habits)
 
                 PageContainer {
                     CalendarBucketListView(authManager: authManager, userManager: userManager)
@@ -57,9 +58,9 @@ struct MainAppView: View {
             // Your floating island tab bar inserted below content
             .safeAreaInset(edge: .bottom) {
                 CustomTabBar(selected: $selectedTab)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .padding(.bottom, 8)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 12)
                     .background(Color.clear)
             }
         }
@@ -123,11 +124,8 @@ private struct CustomTabBar: View {
                     } label: {
                         VStack(spacing: 2) {  // tighter label stack spacing
                             Image(systemName: tab.systemImage)
-                                .font(.system(size: 17, weight: .semibold)) // slightly smaller icon
+                                .font(.system(size: 24, weight: .semibold)) // slightly larger icon since no text
                                 .symbolVariant(selected == tab ? .fill : .none)
-                            Text(tab.title)
-                                .font(.caption2)
-                                .fontWeight(selected == tab ? .semibold : .regular)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
