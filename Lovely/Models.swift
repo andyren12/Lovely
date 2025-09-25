@@ -59,6 +59,22 @@ struct Couple: Codable, Identifiable {
         self.updatedAt = Date()
     }
 
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(String.self, forKey: .id)
+        self.inviteCode = try container.decode(String.self, forKey: .inviteCode)
+        self.user1Id = try container.decode(String.self, forKey: .user1Id)
+        self.user2Id = try container.decodeIfPresent(String.self, forKey: .user2Id)
+        self.bucketListId = try container.decodeIfPresent(String.self, forKey: .bucketListId)
+        self.anniversary = try container.decodeIfPresent(Date.self, forKey: .anniversary)
+        self.profilePictureURL = try container.decodeIfPresent(String.self, forKey: .profilePictureURL)
+        self.coupleName = try container.decodeIfPresent(String.self, forKey: .coupleName)
+        self.habitIds = try container.decodeIfPresent([String].self, forKey: .habitIds) ?? []
+        self.maxHabits = try container.decodeIfPresent(Int.self, forKey: .maxHabits) ?? 5
+        self.createdAt = try container.decode(Date.self, forKey: .createdAt)
+        self.updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+    }
+
 
     var isComplete: Bool {
         return user2Id != nil
@@ -108,6 +124,17 @@ struct BucketListItem: Codable, Identifiable {
         self.completedAt = completedAt
     }
 
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(String.self, forKey: .id) ?? UUID().uuidString
+        self.title = try container.decode(String.self, forKey: .title)
+        self.description = try container.decode(String.self, forKey: .description)
+        self.isCompleted = try container.decode(Bool.self, forKey: .isCompleted)
+        self.photoURLs = try container.decodeIfPresent([String].self, forKey: .photoURLs) ?? []
+        self.createdAt = try container.decode(Date.self, forKey: .createdAt)
+        self.completedAt = try container.decodeIfPresent(Date.self, forKey: .completedAt)
+    }
+
 }
 
 struct CalendarEvent: Codable, Identifiable {
@@ -135,6 +162,20 @@ struct CalendarEvent: Codable, Identifiable {
         self.bucketListItemId = bucketListItemId
     }
 
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(String.self, forKey: .id)
+        self.title = try container.decode(String.self, forKey: .title)
+        self.description = try container.decode(String.self, forKey: .description)
+        self.date = try container.decode(Date.self, forKey: .date)
+        self.isAllDay = try container.decode(Bool.self, forKey: .isAllDay)
+        self.createdAt = try container.decode(Date.self, forKey: .createdAt)
+        self.coupleId = try container.decodeIfPresent(String.self, forKey: .coupleId)
+        self.photoURLs = try container.decodeIfPresent([String].self, forKey: .photoURLs) ?? []
+        self.comments = try container.decodeIfPresent([Comment].self, forKey: .comments) ?? []
+        self.bucketListItemId = try container.decodeIfPresent(String.self, forKey: .bucketListItemId)
+    }
+
 }
 
 struct Comment: Codable, Identifiable {
@@ -150,6 +191,15 @@ struct Comment: Codable, Identifiable {
         self.userName = userName
         self.text = text
         self.createdAt = Date()
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(String.self, forKey: .id) ?? UUID().uuidString
+        self.userId = try container.decode(String.self, forKey: .userId)
+        self.userName = try container.decode(String.self, forKey: .userName)
+        self.text = try container.decode(String.self, forKey: .text)
+        self.createdAt = try container.decode(Date.self, forKey: .createdAt)
     }
 
 }
